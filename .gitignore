@@ -1,0 +1,8 @@
+*.pyc
+*~
+*.DS_Store
+test.py
+test.txt
+*.log
+*.aux
+*.pdf
