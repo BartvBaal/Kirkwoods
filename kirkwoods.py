@@ -16,7 +16,7 @@ import matplotlib as mpl
 mpl.rcParams['axes.linewidth'] = 1.5
 
 # Global parameters - G is PER SOLAR MASS
-G = 4*np.pi**2
+GM = 4*np.pi**2
 MSOL = 3.33e5
 
 
@@ -39,7 +39,7 @@ class Kirkwoods(object):
         self.vx0 = velocity[0]
         self.vy0 = velocity[1]
         
-        # Lists of lists of locations & speeds, useful for plotting
+        # Lists of lists of locations & speeds, useful for plotting (for now)
         self.pos = [[self.x0], [self.y0]]
         self.vel = [[self.vx0], [self.vy0]]
 
@@ -93,29 +93,44 @@ class Simulation(object):
         NOTE: CURRENTLY 2D!
         Always initializes the Sun and Jupiter
         TODO: figure out what decent masses/speeds/locations for asteroids are
+              does mass even matter?
         """
-        # Sun at the center, no initial speeds
-        self.Sun = Kirkwoods([0, 0], [0, 0], MSOL, total_time, time_step)
-
         # Jupiter info:
         # semi-major axis: 5.2044 AU
         # eccentricity:    0.0489
         # orbital period:  11.862 year
         # orbital speed:   13.07 km/s => 2.758 AU/year (km/s : AU/y = 1:0.210945021)
         # mass:            1/1047 SolarMass
-
+        
+        # Sun at the center, no initial speeds
+        self.Sun = Kirkwoods([0, 0], [0, 0], MSOL, total_time, time_step)
+        
         jup_a = 5.2044
         jup_m = 1/1047.
 
         self.Jupiter = Kirkwoods([0, jup_a],
-                                 [np.sqrt((4*np.pi**2)/jup_a), 0],
+                                 [np.sqrt((GM)/jup_a), 0],
                                  jup_m, total_time, time_step)
+        
+        ast_sema = (2., 5.)
+        ast_mass = 0  # Temp value but it's irrelevant? even for CoM it doesn't really impact stuff
+
+        self.asteroids = []  # List off asteroids, (for now)
+        
+        # Currently always starts with x=0, vy=0 - thinking of mixing this up (is that needed?)
         for amount in range(amount_of_asteroids):
-            pass  # Should become initialize asteroids
+            startloc = random.uniform(*ast_sema)
+            startvel = np.sqrt(GM/startloc)
+            asteroid = Kirkwoods([0, startloc],
+                                 [startvel, 0],
+                                 ast_mass, total_time, time_step)
+            self.asteroids.append(asteroid)
 
     def run_two_body_sim(self, body1, body2):
         """
         Simulates just Sun&Jupiter -> start for 3bodys
+        TODO: this should become the first step in the multi_body sims, where
+              we first update Jupiter to the next step and then all asteroids
         """
         Mtot = body1.mass + body2.mass
         dimensions = len(body1.pos)
@@ -124,19 +139,21 @@ class Simulation(object):
         # In case distance doesn't stay the same recalculate inside loop
         # Note, can use this distance to throw away particles i suppose
         
-        ## CURRENTLY BROKEN - INITIAL SPEED NOW CORRECT BUT THINK IT APPLIES SPEEDS WRONG (x/y mix)
-        for i in range(len(body1.time_array)-1):
+        ## Semi working - doesn't use center of mass & sun doesnt move 
+        ## (could simply pretend the sun doesnt actually move, saves calculations...)
+        # Distance only checks x&y as Jupiter moves along the z=0 plane
+        for i in range(len(body1.time_array)):
             distance = ((body1.pos[0][-1]-body2.pos[0][-1])**2 + 
                         (body1.pos[1][-1]-body2.pos[1][-1])**2)**.5
             for dim in range(dimensions):
-                spe1 = body1.vel[dim][-1] - (4*np.pi**2*body1.pos[dim][-1] / 
+                spe1 = body1.vel[dim][-1] - (GM*body1.pos[dim][-1] / 
                                             (distance**3))*body1.time_step
                 loc1 = body1.pos[dim][-1] + spe1*body1.time_step
                 
                 body1.pos[dim].append(loc1)
                 body1.vel[dim].append(spe1)
 
-                spe2 = body2.vel[dim][-1] - (4*np.pi**2*body2.pos[dim][-1] /
+                spe2 = body2.vel[dim][-1] - (GM*body2.pos[dim][-1] /
                                             (distance**3))*body2.time_step
                 loc2 = body2.pos[dim][-1] + spe2*body2.time_step
 
