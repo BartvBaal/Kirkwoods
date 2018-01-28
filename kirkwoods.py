@@ -136,8 +136,34 @@ class Simulation(object):
                                  total_time, time_step)
             self.asteroids.append(asteroid)
 
+    def update_planet(self, sun, planet, dimensions):
+        """
+        Works but has some very naive assumptions...
+        Updates the location and velocity for a planet around the sun for a
+        single timestep.
+        Only has a 2D distance as they move in the z=0 plane
+        """
+        distance = ((sun.pos[0][-1]-planet.pos[0][-1])**2 + 
+                    (sun.pos[1][-1]-planet.pos[1][-1])**2)**.5
+        
+        for dim in range(dimensions):
+            sunv = sun.vel[dim][-1] - (GM*sun.pos[dim][-1] / 
+                                      (distance**3))*sun.time_step
+            sunl = sun.pos[dim][-1] + sunv*sun.time_step
+            
+            sun.pos[dim].append(sunl)
+            sun.vel[dim].append(sunv)
+
+            planetv = planet.vel[dim][-1] - (GM*planet.pos[dim][-1] /
+                                            (distance**3))*planet.time_step
+            planetl = planet.pos[dim][-1] + planetv*planet.time_step
+
+            planet.pos[dim].append(planetl)
+            planet.vel[dim].append(planetv)
+
     def run_two_body_sim(self, body1, body2):
         """
+        Testfunction, currently working on replacement
         Simulates just Sun&Jupiter -> start for 3bodys
         TODO: this should become the first step in the multi_body sims, where
               we first update Jupiter to the next step and then all asteroids
@@ -145,41 +171,57 @@ class Simulation(object):
         Mtot = body1.mass + body2.mass
         dimensions = len(body1.pos)
 
-        # Update the location and speeds for these two bodies
-        # In case distance doesn't stay the same recalculate inside loop
-        # Note, can use this distance to throw away particles i suppose
-        
-        ## Semi working - doesn't use center of mass & sun doesnt move 
-        ## (could simply pretend the sun doesnt actually move, saves calculations...)
-        # Distance only checks x&y as Jupiter moves along the z=0 plane
         for i in range(len(body1.time_array)):
-            distance = ((body1.pos[0][-1]-body2.pos[0][-1])**2 + 
-                        (body1.pos[1][-1]-body2.pos[1][-1])**2)**.5
+            self.update_planet(body1, body2, dimensions)
+
+    def run_three_body_sim(self, body1, body2, body3):
+        """
+        Runs a three body simulation. Plan to expand this to an N body system
+        TODO: resolve the issue with the different masses and what to input...
+        """
+        Mtot = body1.mass + body2.mass + body3.mass
+        dimensions = len(body1.pos)  # Currently still 2D
+        time_step = body1.time_step  # Currently all have the same timestep
+
+        # Only 2D for now!!
+        for i in range(len(body1.time_array)):
+            # Get the distances between the three objects
+            sunplanet = ((body1.pos[0][-1]-body2.pos[0][-1])**2 + 
+                         (body1.pos[1][-1]-body2.pos[1][-1])**2)**.5
+            sunroid = ((body1.pos[0][-1]-body3.pos[0][-1])**2 + 
+                       (body1.pos[1][-1]-body3.pos[1][-1])**2)**.5
+            planetroid = ((body2.pos[0][-1]-body3.pos[0][-1])**2 + 
+                          (body2.pos[1][-1]-body3.pos[1][-1])**2)**.5
+
             for dim in range(dimensions):
-                spe1 = body1.vel[dim][-1] - (GM*body1.pos[dim][-1] / 
-                                            (distance**3))*body1.time_step
-                loc1 = body1.pos[dim][-1] + spe1*body1.time_step
+                # Sun only impacted by planet and vice-versa
+                # Set current locations to prevent off-by-one actions
+                sun_loc = body1.pos[dim][-1]
+                pln_loc = body2.pos[dim][-1]
+                ast_loc = body3.pos[dim][-1]
                 
-                body1.pos[dim].append(loc1)
-                body1.vel[dim].append(spe1)
+                sunv = body1.vel[dim][-1] - (GM*body2.mass*(sun_loc - pln_loc) / 
+                                            (sunplanet**3))*time_step
+                sunl = body1.pos[dim][-1] + sunv*time_step
+                
+                body1.pos[dim].append(sunl)
+                body1.vel[dim].append(sunv)
 
-                spe2 = body2.vel[dim][-1] - (GM*body2.pos[dim][-1] /
-                                            (distance**3))*body2.time_step
-                loc2 = body2.pos[dim][-1] + spe2*body2.time_step
+                plnv = body2.vel[dim][-1] - (GM*body1.mass*(pln_loc - sun_loc) /
+                                            (sunplanet**3))*time_step
+                plnl = body2.pos[dim][-1] + plnv*time_step
 
-                body2.pos[dim].append(loc2)
-                body2.vel[dim].append(spe2)
-#            print distance
+                body2.pos[dim].append(plnl)
+                body2.vel[dim].append(plnv)
 
-            # Calculates new pos and velo using Euler-Cromer method
-#            vi_plus_1 = velocity[-1] - self.time_step*position[-1]
-#            xi_plus_1 = position[-1] + self.time_step*vi_plus_1
+                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
+                                             (sunroid**3))*time_step + 
+                                             (GM*body2.mass*(ast_loc - pln_loc) /
+                                             (planetroid**3))*time_step)
+                roidl = body3.pos[dim][-1] + roidv*time_step
 
-#            position.append(xi_plus_1)
-#            velocity.append(vi_plus_1)
+                body3.pos[dim].append(roidl)
+                body3.vel[dim].append(roidv)
 
-#        return np.asarray(position), np.asarray(velocity)
-    
-    
-    
-    
+
+

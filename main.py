@@ -15,14 +15,15 @@ from scipy.integrate import odeint
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(2, 12, 0.001)
-test.run_two_body_sim(test.Sun, test.Jupiter)
-for asteroid in test.asteroids:
-    test.run_two_body_sim(test.Sun, asteroid)
-    plt.plot(*asteroid.pos, label="Asteroid")
+test = kirkwoods.Simulation(1, 12, 0.001)
+test.run_three_body_sim(test.Sun, test.Jupiter, test.asteroids[0])
+#for asteroid in test.asteroids:
+#    test.run_two_body_sim(test.Sun, asteroid)
+#    plt.plot(*asteroid.pos, label="Asteroid")
 
 #print len(test.Sun.pos[0]), test.Sun.time_step
 plt.plot(*test.Jupiter.pos, label="Jupiter")
-plt.plot(*test.Sun.pos, lw=8)  # Sun cuz it doesnt show stuff for test.Sun.pos ??
+plt.plot(*test.asteroids[0].pos, label="Asteroid")
+plt.plot(*test.Sun.pos, lw=4)  # Sun cuz it doesnt show stuff for test.Sun.pos ??
 plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
 plt.show()
