@@ -17,7 +17,7 @@ mpl.rcParams['axes.linewidth'] = 1.5
 
 # Global parameters - G is PER SOLAR MASS
 GM = 4*np.pi**2
-MSOL = 3.33e5
+MSOL = 1
 
 
 class Kirkwoods(object):
@@ -25,7 +25,7 @@ class Kirkwoods(object):
     This class contains default initialisations bla bla
     """
 
-    def __init__(self, position, velocity, mass,
+    def __init__(self, position, velocity, mass, eccentricity,
                 number_of_seconds = 20, time_step = 0.1):
         """
         Initialisations, if none provided: default parameters are used
@@ -43,8 +43,9 @@ class Kirkwoods(object):
         self.pos = [[self.x0], [self.y0]]
         self.vel = [[self.vx0], [self.vy0]]
 
-        # Initial mass
+        # Initial mass & eccentricity
         self.mass = mass
+        self.ecc = eccentricity
 
         # Duration of the system
         self.number_of_seconds = number_of_seconds
@@ -102,28 +103,37 @@ class Simulation(object):
         # orbital speed:   13.07 km/s => 2.758 AU/year (km/s : AU/y = 1:0.210945021)
         # mass:            1/1047 SolarMass
         
-        # Sun at the center, no initial speeds
-        self.Sun = Kirkwoods([0, 0], [0, 0], MSOL, total_time, time_step)
-        
+        # Point 0,0 to be the center of mass
+        # Calculate offset from CoM
         jup_a = 5.2044
         jup_m = 1/1047.
+        jup_e = 0.0489
+        com_offset = jup_a / (1+(1/jup_m))
 
-        self.Jupiter = Kirkwoods([0, jup_a],
-                                 [np.sqrt((GM)/jup_a), 0],
-                                 jup_m, total_time, time_step)
+        self.Sun = Kirkwoods([0, -com_offset],
+                             [0, 0],  # Unsure how to set initial sun speed
+                             MSOL, 0,
+                             total_time, time_step)
+
+        self.Jupiter = Kirkwoods([0, jup_a*(1-jup_e)-com_offset],
+                                 [np.sqrt(((GM)/jup_a)*((1+jup_e)/1-jup_e)), 0],
+                                 jup_m, jup_e,
+                                 total_time, time_step)
         
         ast_sema = (2., 5.)
         ast_mass = 0  # Temp value but it's irrelevant? even for CoM it doesn't really impact stuff
 
-        self.asteroids = []  # List off asteroids, (for now)
+        self.asteroids = []  # List off asteroids (for now)
         
         # Currently always starts with x=0, vy=0 - thinking of mixing this up (is that needed?)
         for amount in range(amount_of_asteroids):
-            startloc = random.uniform(*ast_sema)
-            startvel = np.sqrt(GM/startloc)
+            startecc = 0  # No eccentricity for now
+            startloc = random.uniform(*ast_sema)*(1-startecc)
+            startvel = np.sqrt(((1+startecc)/(1-startecc))*GM/startloc)
             asteroid = Kirkwoods([0, startloc],
                                  [startvel, 0],
-                                 ast_mass, total_time, time_step)
+                                 ast_mass, 0,
+                                 total_time, time_step)
             self.asteroids.append(asteroid)
 
     def run_two_body_sim(self, body1, body2):
