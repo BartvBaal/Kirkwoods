@@ -46,6 +46,10 @@ class Kirkwoods(object):
         # Initial mass & eccentricity
         self.mass = mass
         self.ecc = eccentricity
+        
+        # Variable to track the distance to the sun and jupiter
+        self.soldi = 0
+        self.jupdi = 0
 
         # Duration of the system
         self.number_of_seconds = number_of_seconds
@@ -134,11 +138,22 @@ class Simulation(object):
                                  [startvel, 0],
                                  ast_mass, 0,
                                  total_time, time_step)
+            asteroid.sundi = self.get_distance(self.Sun, asteroid)
+            asteroid.jupdi = self.get_distance(self.Jupiter, asteroid)
             self.asteroids.append(asteroid)
+
+    def get_distance(self, body1, body2):
+        """
+        Function to get the distance between two bodies
+        """
+        dimensions = len(body1.pos)
+        distance = 0
+        for dim in range(dimensions):
+            distance += (body1.pos[dim][-1] - body2.pos[dim][-1])**2
+        return np.sqrt(distance)
 
     def update_planet(self, sun, planet, dimensions):
         """
-        Works but has some very naive assumptions...
         Updates the location and velocity for a planet around the sun for a
         single timestep.
         Only has a 2D distance as they move in the z=0 plane
@@ -164,8 +179,7 @@ class Simulation(object):
             planet.pos[dim].append(planetl)
             planet.vel[dim].append(planetv)
 
-    def update_asteroid(self, body1, body2, body3, dimensions, sunroid,
-                        planetroid):
+    def update_asteroid(self, body1, body2, body3, dimensions):
         """
         Updates the position for the asteroid *after* the sun and planet have
         been updated. Body1 as star, body2 as planet, body3 as asteroid.
@@ -179,16 +193,19 @@ class Simulation(object):
                 ast_loc = body3.pos[dim][-1]
                 
                 roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
-                                              (sunroid**3))*body3.time_step + 
+                                              (body3.sundi**3))*body3.time_step + 
                                               (GM*body2.mass*(ast_loc - pln_loc) /
-                                               (planetroid**3))*body3.time_step)
+                                               (body3.jupdi**3))*body3.time_step)
                 roidl = body3.pos[dim][-1] + roidv*body3.time_step
 
                 body3.pos[dim].append(roidl)
                 body3.vel[dim].append(roidv)
+        body3.sundi = self.get_distance(body1, body3)
+        body3.jupdi = self.get_distance(body2, body3)
 
     def run_two_body_sim(self, body1, body2):
         """
+        DEPRICATED SHOULD NO LONGER BE USED
         Testfunction, currently working on replacement
         Simulates just Sun&Jupiter -> start for 3bodys
         TODO: this should become the first step in the multi_body sims, where
@@ -202,6 +219,7 @@ class Simulation(object):
 
     def run_three_body_sim(self, body1, body2, body3):
         """
+        SHOULD BE REPLACED BY run_N_body_sim FUNCTION COMPLETELY!
         Runs a three body simulation. Plan to expand this to an N body system
         So for an N body simulation it should update the planet once then do
         all the asteroids. Might be easier if asteroids are natively aware how
@@ -210,17 +228,24 @@ class Simulation(object):
         for each of the asteroids as they already know this & that solves an issue
         of resetting values constantly. So then it becomes update_planet -> update_all_asteroids
         """
-        Mtot = body1.mass + body2.mass + body3.mass
         dimensions = len(body1.pos)  # Currently still 2D
-        time_step = body1.time_step  # Currently all have the same timestep
 
         for i in range(len(body1.time_array)):
-            sunroid = ((body1.pos[0][-1]-body3.pos[0][-1])**2 + 
-                       (body1.pos[1][-1]-body3.pos[1][-1])**2)**.5
-            planetroid = ((body2.pos[0][-1]-body3.pos[0][-1])**2 + 
-                          (body2.pos[1][-1]-body3.pos[1][-1])**2)**.5
             self.update_planet(body1, body2, dimensions)
-            self.update_asteroid(body1, body2, body3, dimensions, sunroid, planetroid)
+            self.update_asteroid(body1, body2, body3, dimensions)
+
+    def run_N_body_sim(self, body1, body2, body3list):
+        """
+        Does the three-body simulation for all objects in the body3list, but
+        will only update the positions of body1 and body2 once per timestep.
+        Note that time_step is build into the objects themselves.
+        """
+        dimensions = len(body1.pos)  # Currently still 2D
+        
+        for i in range(len(body1.time_array)):
+            self.update_planet(body1, body2, dimensions)
+            for body in body3list:
+                self.update_asteroid(body1, body2, body, dimensions)
 
 
 ### OLD CODE BELOW ITS PUT INTO FUNCTIONS, ONLY HERE AS TEMPORARY BACKLOG ###

@@ -8,22 +8,20 @@ from matplotlib import animation
 import random
 from scipy.integrate import odeint
 
-# Probably want to do this initialization as a whole group
-# So we can set the total time to be equal for all objects
 # !Want to work in units of AU/SolarMass/Years!
 ## GM = 4pi^2
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(1, 12, 0.001)
-test.run_three_body_sim(test.Sun, test.Jupiter, test.asteroids[0])
-#for asteroid in test.asteroids:
-#    test.run_two_body_sim(test.Sun, asteroid)
-#    plt.plot(*asteroid.pos, label="Asteroid")
+test = kirkwoods.Simulation(4, 12, 0.001)
+test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 
-#print len(test.Sun.pos[0]), test.Sun.time_step
 plt.plot(*test.Jupiter.pos, label="Jupiter")
-plt.plot(*test.asteroids[0].pos, label="Asteroid")
+for asteroid in test.asteroids:
+    plt.plot(*asteroid.pos, label="Asteroid")
 plt.plot(*test.Sun.pos, lw=4)  # Sun cuz it doesnt show stuff for test.Sun.pos ??
 plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
+plt.axis([-5.5, 5.5, -5.5, 5.5])
 plt.show()
+
+print len(test.Sun.pos[0]), len(test.Jupiter.pos[0]), len(test.asteroids[0].pos[0])
