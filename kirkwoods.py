@@ -120,7 +120,7 @@ class Simulation(object):
                                  jup_m, jup_e,
                                  total_time, time_step)
         
-        ast_sema = (2., 5.)
+        ast_sema = (2, 5.)
         ast_mass = 0  # Temp value but it's irrelevant? even for CoM it doesn't really impact stuff
 
         self.asteroids = []  # List off asteroids (for now)
@@ -147,19 +147,45 @@ class Simulation(object):
                     (sun.pos[1][-1]-planet.pos[1][-1])**2)**.5
         
         for dim in range(dimensions):
-            sunv = sun.vel[dim][-1] - (GM*sun.pos[dim][-1] / 
+            sun_loc = sun.pos[dim][-1]
+            pln_loc = planet.pos[dim][-1]
+            
+            sunv = sun.vel[dim][-1] - (GM*planet.mass*(sun_loc - pln_loc) / 
                                       (distance**3))*sun.time_step
             sunl = sun.pos[dim][-1] + sunv*sun.time_step
             
             sun.pos[dim].append(sunl)
             sun.vel[dim].append(sunv)
 
-            planetv = planet.vel[dim][-1] - (GM*planet.pos[dim][-1] /
+            planetv = planet.vel[dim][-1] - (GM*sun.mass*(pln_loc - sun_loc) /
                                             (distance**3))*planet.time_step
             planetl = planet.pos[dim][-1] + planetv*planet.time_step
 
             planet.pos[dim].append(planetl)
             planet.vel[dim].append(planetv)
+
+    def update_asteroid(self, body1, body2, body3, dimensions, sunroid,
+                        planetroid):
+        """
+        Updates the position for the asteroid *after* the sun and planet have
+        been updated. Body1 as star, body2 as planet, body3 as asteroid.
+        sunroid is the distance to the sun, planetroid the distance to the
+        planet, both as seen from the asteroid.
+        """
+        for dim in range(dimensions):
+                # Set locations, as planet & sun already got updated it's -2
+                sun_loc = body1.pos[dim][-2]
+                pln_loc = body2.pos[dim][-2]
+                ast_loc = body3.pos[dim][-1]
+                
+                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
+                                              (sunroid**3))*body3.time_step + 
+                                              (GM*body2.mass*(ast_loc - pln_loc) /
+                                               (planetroid**3))*body3.time_step)
+                roidl = body3.pos[dim][-1] + roidv*body3.time_step
+
+                body3.pos[dim].append(roidl)
+                body3.vel[dim].append(roidv)
 
     def run_two_body_sim(self, body1, body2):
         """
@@ -177,51 +203,81 @@ class Simulation(object):
     def run_three_body_sim(self, body1, body2, body3):
         """
         Runs a three body simulation. Plan to expand this to an N body system
-        TODO: resolve the issue with the different masses and what to input...
+        So for an N body simulation it should update the planet once then do
+        all the asteroids. Might be easier if asteroids are natively aware how
+        far from the sun&planet they are (so the Kirkwoods object should be expanded)
+        Once that is added it's no longer needed to calculate sunroid/planetroid
+        for each of the asteroids as they already know this & that solves an issue
+        of resetting values constantly. So then it becomes update_planet -> update_all_asteroids
         """
         Mtot = body1.mass + body2.mass + body3.mass
         dimensions = len(body1.pos)  # Currently still 2D
         time_step = body1.time_step  # Currently all have the same timestep
 
-        # Only 2D for now!!
         for i in range(len(body1.time_array)):
-            # Get the distances between the three objects
-            sunplanet = ((body1.pos[0][-1]-body2.pos[0][-1])**2 + 
-                         (body1.pos[1][-1]-body2.pos[1][-1])**2)**.5
             sunroid = ((body1.pos[0][-1]-body3.pos[0][-1])**2 + 
                        (body1.pos[1][-1]-body3.pos[1][-1])**2)**.5
             planetroid = ((body2.pos[0][-1]-body3.pos[0][-1])**2 + 
                           (body2.pos[1][-1]-body3.pos[1][-1])**2)**.5
+            self.update_planet(body1, body2, dimensions)
+            self.update_asteroid(body1, body2, body3, dimensions, sunroid, planetroid)
 
-            for dim in range(dimensions):
-                # Sun only impacted by planet and vice-versa
-                # Set current locations to prevent off-by-one actions
-                sun_loc = body1.pos[dim][-1]
-                pln_loc = body2.pos[dim][-1]
-                ast_loc = body3.pos[dim][-1]
-                
-                sunv = body1.vel[dim][-1] - (GM*body2.mass*(sun_loc - pln_loc) / 
-                                            (sunplanet**3))*time_step
-                sunl = body1.pos[dim][-1] + sunv*time_step
-                
-                body1.pos[dim].append(sunl)
-                body1.vel[dim].append(sunv)
 
-                plnv = body2.vel[dim][-1] - (GM*body1.mass*(pln_loc - sun_loc) /
-                                            (sunplanet**3))*time_step
-                plnl = body2.pos[dim][-1] + plnv*time_step
+### OLD CODE BELOW ITS PUT INTO FUNCTIONS, ONLY HERE AS TEMPORARY BACKLOG ###
+#            for dim in range(dimensions):
+#                # Set locations, as planet & sun already got updated it's -2
+#                sun_loc = body1.pos[dim][-2]
+#                pln_loc = body2.pos[dim][-2]
+#                ast_loc = body3.pos[dim][-1]
+#                
+#                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
+#                                              (sunroid**3))*time_step + 
+#                                              (GM*body2.mass*(ast_loc - pln_loc) /
+#                                               (planetroid**3))*time_step)
+#                roidl = body3.pos[dim][-1] + roidv*time_step
 
-                body2.pos[dim].append(plnl)
-                body2.vel[dim].append(plnv)
+#                body3.pos[dim].append(roidl)
+#                body3.vel[dim].append(roidv)
 
-                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
-                                             (sunroid**3))*time_step + 
-                                             (GM*body2.mass*(ast_loc - pln_loc) /
-                                             (planetroid**3))*time_step)
-                roidl = body3.pos[dim][-1] + roidv*time_step
+#        # Only 2D for now!!
+#        for i in range(len(body1.time_array)):
+#            # Get the distances between the three objects
+#            sunplanet = ((body1.pos[0][-1]-body2.pos[0][-1])**2 + 
+#                         (body1.pos[1][-1]-body2.pos[1][-1])**2)**.5
+#            sunroid = ((body1.pos[0][-1]-body3.pos[0][-1])**2 + 
+#                       (body1.pos[1][-1]-body3.pos[1][-1])**2)**.5
+#            planetroid = ((body2.pos[0][-1]-body3.pos[0][-1])**2 + 
+#                          (body2.pos[1][-1]-body3.pos[1][-1])**2)**.5
 
-                body3.pos[dim].append(roidl)
-                body3.vel[dim].append(roidv)
+#            for dim in range(dimensions):
+#                # Sun only impacted by planet and vice-versa
+#                # Set current locations to prevent off-by-one actions
+#                sun_loc = body1.pos[dim][-1]
+#                pln_loc = body2.pos[dim][-1]
+#                ast_loc = body3.pos[dim][-1]
+#                
+#                sunv = body1.vel[dim][-1] - (GM*body2.mass*(sun_loc - pln_loc) / 
+#                                            (sunplanet**3))*time_step
+#                sunl = body1.pos[dim][-1] + sunv*time_step
+#                
+#                body1.pos[dim].append(sunl)
+#                body1.vel[dim].append(sunv)
+
+#                plnv = body2.vel[dim][-1] - (GM*body1.mass*(pln_loc - sun_loc) /
+#                                            (sunplanet**3))*time_step
+#                plnl = body2.pos[dim][-1] + plnv*time_step
+
+#                body2.pos[dim].append(plnl)
+#                body2.vel[dim].append(plnv)
+
+#                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
+#                                             (sunroid**3))*time_step + 
+#                                             (GM*body2.mass*(ast_loc - pln_loc) /
+#                                             (planetroid**3))*time_step)
+#                roidl = body3.pos[dim][-1] + roidv*time_step
+
+#                body3.pos[dim].append(roidl)
+#                body3.vel[dim].append(roidv)
 
 
 
