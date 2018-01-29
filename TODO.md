@@ -7,7 +7,7 @@
   - ~~Probably want to just use x&y location&speeds and use a small random range for the z-speeds, although that is further down the line~~ 3D transition done, ~~currently no z speeds~~
     
 * Find an easy way to throw out asteroids which become too elliptical or go too far out (need2track changes in eccentricity for the first which might be not-practical...)
-  - As asteroids are now aware how far from the sun they are, this should be an easy thing to implement
+  - ~~As asteroids are now aware how far from the sun they are, this should be an easy thing to implement~~ Currently throw away all asteroids which go further than 6.5AU
   - Might be an idea to also throw away asteroids which become too attached to Jupiter (moon-like)
 
 * Find a way to have the asteroids be aware what their period is

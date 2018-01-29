@@ -93,7 +93,8 @@ class Kirkwoods(object):
 
 class Simulation(object):
     """
-    Class which executes the simulation, from initialization to visualization
+    Class which executes the simulation, from initialization to visualization.
+    Visualization currently not yet integrated into the classwork, will eventually happen.
     """
     def __init__(self, amount_of_asteroids, total_time, time_step):
         """
@@ -148,7 +149,7 @@ class Simulation(object):
             startz = 0  # Start in the jupiter-sun plane
             startvelx = np.sin(orb_loc)*startvel
             startvely = -np.cos(orb_loc)*startvel
-            startvelz = random.uniform(-startvel, startvel)/100  # Temp range
+            startvelz = random.uniform(-startvel, startvel)*0.01  # Temp range
 
             # Initialize the asteroid & have set distances to Jupiter and the Sun
             asteroid = Kirkwoods([startx, starty, startz],

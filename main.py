@@ -1,5 +1,6 @@
 """
-Main file which executes the code. Currently does a 2D jupiter-sun simulation
+Main file which executes the code. Runs a simulation for N asteroids under the
+gravitational effects of the Sun and Jupiter.
 """
 import kirkwoods
 import numpy as np
@@ -9,12 +10,13 @@ from matplotlib import animation
 import random
 from scipy.integrate import odeint
 
+
 # !Want to work in units of AU/SolarMass/Years!
 ## GM = 4pi^2
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(50, 48, 0.001)
+test = kirkwoods.Simulation(250, 120, 0.002)
 test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 
 # 2D plotting stuff below
@@ -25,6 +27,8 @@ test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 #plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
 #plt.axis([-5.5, 5.5, -5.5, 5.5])
 #plt.show()
+
+print len(test.asteroids)
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -41,5 +45,3 @@ ax.set_zlim3d(-.1, .1)  # Unsure what the best values are here, this seems prett
 ax.set_zlabel("Z (AU)")
 
 plt.show()
-
-print len(test.asteroids)
