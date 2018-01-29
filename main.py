@@ -18,8 +18,8 @@ test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 
 plt.plot(*test.Jupiter.pos, label="Jupiter")
 for asteroid in test.asteroids:
-    plt.plot(*asteroid.pos)  #, label="Asteroid"
-plt.plot(*test.Sun.pos, lw=4)  # Sun cuz it doesnt show stuff for test.Sun.pos ??
+    plt.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
+plt.plot(*test.Sun.pos, lw=4, label="Sun")
 plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
 plt.axis([-5.5, 5.5, -5.5, 5.5])
 plt.show()

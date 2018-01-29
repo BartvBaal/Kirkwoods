@@ -183,8 +183,7 @@ class Simulation(object):
         """
         Updates the position for the asteroid *after* the sun and planet have
         been updated. Body1 as star, body2 as planet, body3 as asteroid.
-        sunroid is the distance to the sun, planetroid the distance to the
-        planet, both as seen from the asteroid.
+        dimensions should be the same for all objects
         """
         for dim in range(dimensions):
                 # Set locations, should update asteroids before updating sun/planet
@@ -239,6 +238,9 @@ class Simulation(object):
         Does the three-body simulation for all objects in the body3list, but
         will only update the positions of body1 and body2 once per timestep.
         Note that time_step is build into the objects themselves.
+        body1 and body2 are the main gravitational powers in the field, while
+        body3list is a list containing all lesser gravitational objects which
+        should be updated as a result of the other two objects.
         """
         dimensions = len(body1.pos)  # Currently still 2D
         

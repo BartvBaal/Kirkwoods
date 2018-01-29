@@ -7,6 +7,7 @@
   - Probably want to just use x&y location&speeds and use a small random range for the z-speeds, although that is further down the line
     
 * Find an easy way to throw out asteroids which become too elliptical or go too far out (need2track changes in eccentricity for the first which might be not-practical...)
+  - As asteroids are now aware how far from the sun they are, this should be an easy thing to implement
 
 * Later additional options:
   - Think about getting different timesteps for different asteroids...
