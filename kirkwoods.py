@@ -114,14 +114,15 @@ class Simulation(object):
         jup_m = 1/1047.
         jup_e = 0.0489
         com_offset = jup_a / (1+(1/jup_m))
+        jup_startvel = np.sqrt(((GM)/jup_a)*((1+jup_e)/1-jup_e))
 
         self.Sun = Kirkwoods([0, -com_offset, 0],
-                             [0, 0, 0],  # Unsure how to set initial sun speed
+                             [-jup_startvel*com_offset/jup_a, 0, 0],
                              MSOL, 0,
                              total_time, time_step)
 
         self.Jupiter = Kirkwoods([0, jup_a*(1-jup_e)-com_offset, 0],
-                                 [np.sqrt(((GM)/jup_a)*((1+jup_e)/1-jup_e)), 0, 0],
+                                 [jup_startvel, 0, 0],
                                  jup_m, jup_e,
                                  total_time, time_step)
         
@@ -143,7 +144,7 @@ class Simulation(object):
             startz = 0  # Start in the jupiter-sun plane
             startvelx = np.sin(orb_loc)*startvel
             startvely = -np.cos(orb_loc)*startvel
-            startvelz = 0  # Find out what decent ranges are for this
+            startvelz = random.uniform(-startvel, startvel)/100  # Temp range]
 
             # Initialize the asteroid & have set distances to Jupiter and the Sun
             asteroid = Kirkwoods([startx, starty, startz],
