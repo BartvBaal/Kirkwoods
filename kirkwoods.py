@@ -97,9 +97,13 @@ class Simulation(object):
     """
     def __init__(self, amount_of_asteroids, total_time, time_step):
         """
-        NOTE: SWITCHING TO 3D - cannot guarentee correctness atm
-        Always initializes the Sun and Jupiter
-        TODO: figure out what decent masses for asteroids are does mass even matter?
+        NOTE: switched to 3D - appears to be working correctly
+        Always initializes the Sun and Jupiter, gives them starting locations
+        and speeds in order to keep the center of mass fixed in the origin 0,0.
+        Then it initializes as many asteroids as are specified per
+        number_of_asteroids, how long the simulation should last in total_time
+        and how big the (initial) time_step of the objects should be. Both the
+        time_step and total_time are given in years.
         """
         # Jupiter info:
         # semi-major axis: 5.2044 AU
@@ -144,7 +148,7 @@ class Simulation(object):
             startz = 0  # Start in the jupiter-sun plane
             startvelx = np.sin(orb_loc)*startvel
             startvely = -np.cos(orb_loc)*startvel
-            startvelz = random.uniform(-startvel, startvel)/100  # Temp range]
+            startvelz = random.uniform(-startvel, startvel)/100  # Temp range
 
             # Initialize the asteroid & have set distances to Jupiter and the Sun
             asteroid = Kirkwoods([startx, starty, startz],

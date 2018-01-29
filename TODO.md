@@ -14,5 +14,7 @@
   - Possibly track how long it takes them to cross from negative x -> positive x? Assuming they are following (mostly) circular orbits that should work
   - Can even track eccentricity by checking the difference in positive x time versus negative x time which might allow for throwing out very eccentric orbits if we want to
 
+* Initial time-check shows get_distance takes up a lot of time - would be nice if this can be optimized. Most other time goes into update_asteroid, also a point for optimization
+
 * Later additional options:
   - ~~Think about getting different timesteps for different asteroids...~~ It's probably easier to ask all asteroids how small it wants the timestep to be and use the smallest timestep for all objects, rather than have different timesteps for different objects at a certain time
