@@ -8,9 +8,11 @@
     
 * Find an easy way to throw out asteroids which become too elliptical or go too far out (need2track changes in eccentricity for the first which might be not-practical...)
   - As asteroids are now aware how far from the sun they are, this should be an easy thing to implement
+  - Might be an idea to also throw away asteroids which become too attached to Jupiter (moon-like)
 
 * Find a way to have the asteroids be aware what their period is
   - Possibly track how long it takes them to cross from negative x -> positive x? Assuming they are following (mostly) circular orbits that should work
+  - Can even track eccentricity by checking the difference in positive x time versus negative x time which might allow for throwing out very eccentric orbits if we want to
 
 * Later additional options:
   - Think about getting different timesteps for different asteroids...

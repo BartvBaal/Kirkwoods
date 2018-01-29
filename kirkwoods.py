@@ -129,14 +129,23 @@ class Simulation(object):
 
         self.asteroids = []  # List off asteroids (for now)
         
-        # Currently always starts with x=0, vy=0 - thinking of mixing this up (is that needed?)
+        # Create all the asteroid Kirkwoods objects
         for amount in range(amount_of_asteroids):
             startecc = 0  # No eccentricity for now
             startloc = random.uniform(*ast_sema)*(1-startecc)
             startvel = np.sqrt(((1+startecc)/(1-startecc))*GM/startloc)
-            asteroid = Kirkwoods([0, startloc],
-                                 [startvel, 0],
-                                 ast_mass, 0,
+
+            # Randomize the starting point of the asteroid's orbit
+            orb_loc = random.uniform(0, 2*np.pi)
+            startx = np.cos(orb_loc)*startloc
+            starty = np.sin(orb_loc)*startloc
+            startvelx = np.sin(orb_loc)*startvel
+            startvely = -np.cos(orb_loc)*startvel
+
+            # Initialize the asteroid & have set distances to Jupiter and the Sun
+            asteroid = Kirkwoods([startx, starty],
+                                 [startvelx, startvely],
+                                 ast_mass, startecc,
                                  total_time, time_step)
             asteroid.sundi = self.get_distance(self.Sun, asteroid)
             asteroid.jupdi = self.get_distance(self.Jupiter, asteroid)
@@ -160,7 +169,8 @@ class Simulation(object):
         """
         distance = ((sun.pos[0][-1]-planet.pos[0][-1])**2 + 
                     (sun.pos[1][-1]-planet.pos[1][-1])**2)**.5
-        
+
+        # Once 3D is implemented should probably hardcode this to range(2)
         for dim in range(dimensions):
             sun_loc = sun.pos[dim][-1]
             pln_loc = planet.pos[dim][-1]
@@ -181,12 +191,14 @@ class Simulation(object):
 
     def update_asteroid(self, body1, body2, body3, dimensions):
         """
-        Updates the position for the asteroid *after* the sun and planet have
+        Updates the position for the asteroid *before* the sun and planet have
         been updated. Body1 as star, body2 as planet, body3 as asteroid.
-        dimensions should be the same for all objects
+        dimensions should be the same for all objects. Currently still 2D but
+        should easily expand into 3D.
         """
         for dim in range(dimensions):
-                # Set locations, should update asteroids before updating sun/planet
+                # Set locations, should update asteroids before updating
+                # sun/planet to prevent off-by-one errors
                 sun_loc = body1.pos[dim][-1]
                 pln_loc = body2.pos[dim][-1]
                 ast_loc = body3.pos[dim][-1]

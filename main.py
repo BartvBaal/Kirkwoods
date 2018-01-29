@@ -13,7 +13,7 @@ from scipy.integrate import odeint
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(10, 12, 0.001)
+test = kirkwoods.Simulation(5, 3, 0.001)
 test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 
 plt.plot(*test.Jupiter.pos, label="Jupiter")
