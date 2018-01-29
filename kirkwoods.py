@@ -34,14 +34,16 @@ class Kirkwoods(object):
         # Initial positions
         self.x0 = position[0]
         self.y0 = position[1]
+        self.z0 = position[2]
 
         # Initial velocity
         self.vx0 = velocity[0]
         self.vy0 = velocity[1]
-        
+        self.vz0 = velocity[2]
+
         # Lists of lists of locations & speeds, useful for plotting (for now)
-        self.pos = [[self.x0], [self.y0]]
-        self.vel = [[self.vx0], [self.vy0]]
+        self.pos = [[self.x0], [self.y0], [self.z0]]
+        self.vel = [[self.vx0], [self.vy0], [self.vz0]]
 
         # Initial mass & eccentricity
         self.mass = mass
@@ -95,10 +97,9 @@ class Simulation(object):
     """
     def __init__(self, amount_of_asteroids, total_time, time_step):
         """
-        NOTE: CURRENTLY 2D!
+        NOTE: SWITCHING TO 3D - cannot guarentee correctness atm
         Always initializes the Sun and Jupiter
-        TODO: figure out what decent masses/speeds/locations for asteroids are
-              does mass even matter?
+        TODO: figure out what decent masses for asteroids are does mass even matter?
         """
         # Jupiter info:
         # semi-major axis: 5.2044 AU
@@ -114,13 +115,13 @@ class Simulation(object):
         jup_e = 0.0489
         com_offset = jup_a / (1+(1/jup_m))
 
-        self.Sun = Kirkwoods([0, -com_offset],
-                             [0, 0],  # Unsure how to set initial sun speed
+        self.Sun = Kirkwoods([0, -com_offset, 0],
+                             [0, 0, 0],  # Unsure how to set initial sun speed
                              MSOL, 0,
                              total_time, time_step)
 
-        self.Jupiter = Kirkwoods([0, jup_a*(1-jup_e)-com_offset],
-                                 [np.sqrt(((GM)/jup_a)*((1+jup_e)/1-jup_e)), 0],
+        self.Jupiter = Kirkwoods([0, jup_a*(1-jup_e)-com_offset, 0],
+                                 [np.sqrt(((GM)/jup_a)*((1+jup_e)/1-jup_e)), 0, 0],
                                  jup_m, jup_e,
                                  total_time, time_step)
         
@@ -139,12 +140,14 @@ class Simulation(object):
             orb_loc = random.uniform(0, 2*np.pi)
             startx = np.cos(orb_loc)*startloc
             starty = np.sin(orb_loc)*startloc
+            startz = 0  # Start in the jupiter-sun plane
             startvelx = np.sin(orb_loc)*startvel
             startvely = -np.cos(orb_loc)*startvel
+            startvelz = 0  # Find out what decent ranges are for this
 
             # Initialize the asteroid & have set distances to Jupiter and the Sun
-            asteroid = Kirkwoods([startx, starty],
-                                 [startvelx, startvely],
+            asteroid = Kirkwoods([startx, starty, startz],
+                                 [startvelx, startvely, startvelz],
                                  ast_mass, startecc,
                                  total_time, time_step)
             asteroid.sundi = self.get_distance(self.Sun, asteroid)
