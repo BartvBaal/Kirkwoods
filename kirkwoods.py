@@ -222,6 +222,12 @@ class Simulation(object):
         body3.sundi = self.get_distance(body1, body3)
         body3.jupdi = self.get_distance(body2, body3)
 
+        # Remove the asteroid from the list if it goes too far out
+        # Current limit is 6.5AU
+        if body3.sundi > 6.5:
+            self.asteroids.remove(body3)
+#            print len(self.asteroids)
+
     def run_two_body_sim(self, body1, body2):
         """
         DEPRICATED SHOULD NO LONGER BE USED
