@@ -6,3 +6,5 @@ test.txt
 *.log
 *.aux
 *.pdf
+.ipynb_checkpoints/
+*.ipynb
