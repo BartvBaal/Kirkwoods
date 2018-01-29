@@ -187,9 +187,9 @@ class Simulation(object):
         planet, both as seen from the asteroid.
         """
         for dim in range(dimensions):
-                # Set locations, as planet & sun already got updated it's -2
-                sun_loc = body1.pos[dim][-2]
-                pln_loc = body2.pos[dim][-2]
+                # Set locations, should update asteroids before updating sun/planet
+                sun_loc = body1.pos[dim][-1]
+                pln_loc = body2.pos[dim][-1]
                 ast_loc = body3.pos[dim][-1]
                 
                 roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
@@ -243,10 +243,9 @@ class Simulation(object):
         dimensions = len(body1.pos)  # Currently still 2D
         
         for i in range(len(body1.time_array)):
-            self.update_planet(body1, body2, dimensions)
             for body in body3list:
                 self.update_asteroid(body1, body2, body, dimensions)
-
+            self.update_planet(body1, body2, dimensions)
 
 ### OLD CODE BELOW ITS PUT INTO FUNCTIONS, ONLY HERE AS TEMPORARY BACKLOG ###
 #            for dim in range(dimensions):
