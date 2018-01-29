@@ -170,10 +170,11 @@ class Simulation(object):
         single timestep.
         Only has a 2D distance as they move in the z=0 plane
         """
+        # Sun and Jupiter should never get a z-location != 0 so only 2D
         distance = ((sun.pos[0][-1]-planet.pos[0][-1])**2 + 
                     (sun.pos[1][-1]-planet.pos[1][-1])**2)**.5
 
-        # Once 3D is implemented should probably hardcode this to range(2)
+        # Currently does 3D although it only needs to do 2D - might save time to hardcode range(2)
         for dim in range(dimensions):
             sun_loc = sun.pos[dim][-1]
             pln_loc = planet.pos[dim][-1]
@@ -196,8 +197,7 @@ class Simulation(object):
         """
         Updates the position for the asteroid *before* the sun and planet have
         been updated. Body1 as star, body2 as planet, body3 as asteroid.
-        dimensions should be the same for all objects. Currently still 2D but
-        should easily expand into 3D.
+        dimensions should be the same for all objects. Currently works for 3D.
         """
         for dim in range(dimensions):
                 # Set locations, should update asteroids before updating

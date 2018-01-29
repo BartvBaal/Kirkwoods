@@ -4,6 +4,7 @@ Main file which executes the code. Currently does a 2D jupiter-sun simulation
 import kirkwoods
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 import random
 from scipy.integrate import odeint
@@ -16,12 +17,22 @@ MSOL = 3.33e5
 test = kirkwoods.Simulation(5, 12, 0.001)
 test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 
-plt.plot(*test.Jupiter.pos[:2], label="Jupiter")
-plt.plot(*test.Sun.pos[:2], lw=4, label="Sun")
-for asteroid in test.asteroids:
-    plt.plot(*asteroid.pos[:2], ls="dashed")  #, label="Asteroid"
-plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
-plt.axis([-5.5, 5.5, -5.5, 5.5])
-plt.show()
+# 2D plotting stuff below
+#plt.plot(*test.Jupiter.pos[:2], label="Jupiter")
+#plt.plot(*test.Sun.pos[:2], lw=4, label="Sun")
+#for asteroid in test.asteroids:
+#    plt.plot(*asteroid.pos[:2], ls="dashed")  #, label="Asteroid"
+#plt.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
+#plt.axis([-5.5, 5.5, -5.5, 5.5])
+#plt.show()
 
-print len(test.Sun.pos[0]), len(test.Jupiter.pos[0]), len(test.asteroids[0].pos[0])
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(*test.Jupiter.pos, label="Jupiter")
+ax.plot(*test.Sun.pos, lw=4, label="Sun")
+for asteroid in test.asteroids:
+    ax.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
+ax.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
+ax.axis([-5.5, 5.5, -5.5, 5.5])
+
+plt.show()
