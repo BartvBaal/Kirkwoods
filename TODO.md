@@ -15,4 +15,4 @@
   - Can even track eccentricity by checking the difference in positive x time versus negative x time which might allow for throwing out very eccentric orbits if we want to
 
 * Later additional options:
-  - Think about getting different timesteps for different asteroids...
+  - ~~Think about getting different timesteps for different asteroids...~~ It's probably easier to ask all asteroids how small it wants the timestep to be and use the smallest timestep for all objects, rather than have different timesteps for different objects at a certain time
