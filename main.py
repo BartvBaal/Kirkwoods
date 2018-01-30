@@ -16,8 +16,9 @@ from scipy.integrate import odeint
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(250, 120, 0.002)
+test = kirkwoods.Simulation(250, 5, 0.002)
 test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
+test.visualize()
 
 # 2D plotting stuff below
 #plt.plot(*test.Jupiter.pos[:2], label="Jupiter")
@@ -28,20 +29,4 @@ test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 #plt.axis([-5.5, 5.5, -5.5, 5.5])
 #plt.show()
 
-print len(test.asteroids)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot(*test.Sun.pos, lw=4, label="Sun")
-for asteroid in test.asteroids:
-    ax.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
-ax.plot(*test.Jupiter.pos, label="Jupiter", c="black", lw=2)
-ax.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
-ax.set_xlim3d(-5.5, 5.5)
-ax.set_xlabel("X (AU)")
-ax.set_ylim3d(-5.5, 5.5)
-ax.set_ylabel("Y (AU)")
-ax.set_zlim3d(-.1, .1)  # Unsure what the best values are here, this seems pretty ok
-ax.set_zlabel("Z (AU)")
-
-plt.show()

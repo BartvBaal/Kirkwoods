@@ -8,6 +8,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+from mpl_toolkits.mplot3d import Axes3D
 import random
 from scipy.integrate import odeint
 
@@ -18,6 +19,7 @@ mpl.rcParams['axes.linewidth'] = 1.5
 # Global parameters - G is PER SOLAR MASS
 GM = 4*np.pi**2
 MSOL = 1
+JPER = np.sqrt(5.2044**3)
 
 
 class Kirkwoods(object):
@@ -50,7 +52,7 @@ class Kirkwoods(object):
         self.ecc = eccentricity
         
         # Variable to track the distance to the sun and jupiter
-        self.soldi = 0
+        self.sundi = 0
         self.jupdi = 0
 
         # Duration of the system
@@ -61,6 +63,29 @@ class Kirkwoods(object):
 
         # An array of time intervals (will be same for all of the methods)
         self.time_array = np.arange(0, number_of_seconds, time_step)
+
+    def recover_period(self):
+        """
+        Function to find the period of the asteroid - used after running the
+        simulation. P^2 = a^3; pretends that sundi is the semi-major axis.
+        Will recover the initial distance if the asteroid has not yet completed
+        a full orbit around the sun yet
+        """
+        period = np.sqrt(self.sundi**(3))
+        backtrack = int(period / self.time_step)
+        
+        # Set backtrack to find starting value if no complete orbit has happened yet
+        if backtrack > len(self.pos[0]):
+            backtrack = 0
+
+        last_year_pos = np.sqrt((self.pos[0][-backtrack]**2) + 
+                                (self.pos[1][-backtrack]**2) + 
+                                (self.pos[2][-backtrack]**2))
+
+        # Check if the position last year isn't too far from current one
+        # Used to verify the time
+        if .9*self.sundi < last_year_pos < 1.1*self.sundi:
+            return period/JPER
 
     def harm_oscil_analytic(self):
         """
@@ -275,6 +300,38 @@ class Simulation(object):
             for body in body3list:
                 self.update_asteroid(body1, body2, body, dimensions)
             self.update_planet(body1, body2, dimensions)
+
+    def visualize(self):
+        """
+        Plots the paths of the first 30 asteroids.
+        """
+        # Update on how many asteroids are still left
+        print len(self.asteroids)
+
+        # Create histogram of orbital times
+        periodlist = []
+        for asteroid in self.asteroids:
+            period = asteroid.recover_period()
+            if period:
+                periodlist.append(period)
+        plt.hist(periodlist, edgecolor="black", bins=25)
+        plt.show()
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(*self.Sun.pos, lw=4, label="Sun")
+        for asteroid in self.asteroids[:30]:
+            ax.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
+        ax.plot(*self.Jupiter.pos, label="Jupiter", c="black", lw=2)
+        ax.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
+        ax.set_xlim3d(-5.5, 5.5)
+        ax.set_xlabel("X (AU)")
+        ax.set_ylim3d(-5.5, 5.5)
+        ax.set_ylabel("Y (AU)")
+        ax.set_zlim3d(-.1, .1)  # Unsure what the best values are here, this seems pretty ok
+        ax.set_zlabel("Z (AU)")
+
+        plt.show()
 
 ### OLD CODE BELOW ITS PUT INTO FUNCTIONS, ONLY HERE AS TEMPORARY BACKLOG ###
 #            for dim in range(dimensions):
