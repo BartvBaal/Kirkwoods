@@ -42,6 +42,14 @@ class Kirkwoods(object):
         self.vx0 = velocity[0]
         self.vy0 = velocity[1]
         self.vz0 = velocity[2]
+        
+        # Current location and velocity of the objects
+        self.x = position[0]
+        self.y = position[1]
+        self.z = position[2]
+        self.vx = velocity[0]
+        self.vy = velocity[1]
+        self.vz = velocity[2]
 
         # Lists of lists of locations & speeds, useful for plotting (for now)
         self.pos = [[self.x0], [self.y0], [self.z0]]
@@ -160,6 +168,7 @@ class Simulation(object):
         ast_mass = 0  # Temp value but it's irrelevant? even for CoM it doesn't really impact stuff
 
         self.asteroids = []  # List off asteroids (for now)
+        self.time_step = time_step  # Use this time step everywhere
         
         # Create all the asteroid Kirkwoods objects
         for amount in range(amount_of_asteroids):
@@ -189,10 +198,9 @@ class Simulation(object):
         """
         Function to get the distance between two bodies
         """
-        dimensions = len(body1.pos)
-        distance = 0
-        for dim in range(dimensions):
-            distance += (body1.pos[dim][-1] - body2.pos[dim][-1])**2
+        distance = ((body1.x - body2.x)**2 + 
+                    (body1.y - body2.y)**2 + 
+                    (body1.z - body2.z)**2)
         return np.sqrt(distance)
 
     def update_planet(self, sun, planet, dimensions):
@@ -202,27 +210,34 @@ class Simulation(object):
         Only has a 2D distance as they move in the z=0 plane
         """
         # Sun and Jupiter should never get a z-location != 0 so only 2D
-        distance = ((sun.pos[0][-1]-planet.pos[0][-1])**2 + 
-                    (sun.pos[1][-1]-planet.pos[1][-1])**2)**.5
+        distance = ((sun.x-planet.x)**2 + 
+                    (sun.y-planet.y)**2)**.5
 
-        # Currently does 3D although it only needs to do 2D - might save time to hardcode range(2)
-        for dim in range(dimensions):
-            sun_loc = sun.pos[dim][-1]
-            pln_loc = planet.pos[dim][-1]
-            
-            sunv = sun.vel[dim][-1] - (GM*planet.mass*(sun_loc - pln_loc) / 
-                                      (distance**3))*sun.time_step
-            sunl = sun.pos[dim][-1] + sunv*sun.time_step
-            
-            sun.pos[dim].append(sunl)
-            sun.vel[dim].append(sunv)
+        # Update all x-values, then all y-values (no z needed for planets)
+        sun.vx = sun.vx - (GM*planet.mass*(sun.x - planet.x) / (distance**3))*self.time_step
+        sun.x = sun.x + sun.vx*self.time_step
+        
+        sun.pos[0].append(sun.x)
+        sun.vel[0].append(sun.vx)
 
-            planetv = planet.vel[dim][-1] - (GM*sun.mass*(pln_loc - sun_loc) /
-                                            (distance**3))*planet.time_step
-            planetl = planet.pos[dim][-1] + planetv*planet.time_step
+        planet.vx = planet.vx - (GM*sun.mass*(planet.x - sun.x) / (distance**3))*self.time_step
+        planet.x = planet.x + planet.vx*self.time_step
 
-            planet.pos[dim].append(planetl)
-            planet.vel[dim].append(planetv)
+        planet.pos[0].append(planet.x)
+        planet.vel[0].append(planet.vx)
+        
+        # Now for y
+        sun.vy = sun.vy - (GM*planet.mass*(sun.y - planet.y) / (distance**3))*self.time_step
+        sun.y = sun.y + sun.vy*self.time_step
+        
+        sun.pos[1].append(sun.y)
+        sun.vel[1].append(sun.vy)
+
+        planet.vy = planet.vy - (GM*sun.mass*(planet.y - sun.y) / (distance**3))*self.time_step
+        planet.y = planet.y + planet.vy*self.time_step
+
+        planet.pos[1].append(planet.y)
+        planet.vel[1].append(planet.vy)
 
     def update_asteroid(self, body1, body2, body3, dimensions):
         """
@@ -230,21 +245,34 @@ class Simulation(object):
         been updated. Body1 as star, body2 as planet, body3 as asteroid.
         dimensions should be the same for all objects. Currently works for 3D.
         """
-        for dim in range(dimensions):
-                # Set locations, should update asteroids before updating
-                # sun/planet to prevent off-by-one errors
-                sun_loc = body1.pos[dim][-1]
-                pln_loc = body2.pos[dim][-1]
-                ast_loc = body3.pos[dim][-1]
-                
-                roidv = body3.vel[dim][-1] - ((GM*body1.mass*(ast_loc - sun_loc) /
-                                              (body3.sundi**3))*body3.time_step + 
-                                              (GM*body2.mass*(ast_loc - pln_loc) /
-                                               (body3.jupdi**3))*body3.time_step)
-                roidl = body3.pos[dim][-1] + roidv*body3.time_step
+        # Set locations, should update asteroids before updating
+        # sun/planet to prevent off-by-one errors
+        
+        # First update x-values, then y-values, then z-values
+        body3.vx = body3.vx - ((GM*body1.mass*(body3.x - body1.x) / (body3.sundi**3)) + 
+                               (GM*body2.mass*(body3.x - body2.x) / (body3.jupdi**3)))*self.time_step
+        body3.x = body3.x + body3.vx*self.time_step
 
-                body3.pos[dim].append(roidl)
-                body3.vel[dim].append(roidv)
+        body3.pos[0].append(body3.x)
+        body3.vel[0].append(body3.vx)
+
+        # Updating y-values for asteroid
+        body3.vy = body3.vy - ((GM*body1.mass*(body3.y - body1.y) / (body3.sundi**3)) + 
+                               (GM*body2.mass*(body3.y - body2.y) / (body3.jupdi**3)))*self.time_step
+        body3.y = body3.y + body3.vy*self.time_step
+
+        body3.pos[1].append(body3.y)
+        body3.vel[1].append(body3.vy)
+
+        # Updating z-values for asteroid
+        body3.vz = body3.vz - ((GM*body1.mass*(body3.z - body1.z) / (body3.sundi**3)) + 
+                               (GM*body2.mass*(body3.z - body2.z) / (body3.jupdi**3)))*self.time_step
+        body3.z = body3.z + body3.vz*self.time_step
+
+        body3.pos[2].append(body3.z)
+        body3.vel[2].append(body3.vz)
+
+        # Recalculate distances to sun and jupiter
         body3.sundi = self.get_distance(body1, body3)
         body3.jupdi = self.get_distance(body2, body3)
 
@@ -289,7 +317,7 @@ class Simulation(object):
         """
         Does the three-body simulation for all objects in the body3list, but
         will only update the positions of body1 and body2 once per timestep.
-        Note that time_step is build into the objects themselves.
+        Note that time_step is build into the simulation.
         body1 and body2 are the main gravitational powers in the field, while
         body3list is a list containing all lesser gravitational objects which
         should be updated as a result of the other two objects.
