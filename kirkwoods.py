@@ -305,16 +305,18 @@ class Simulation(object):
         """
         Plots the paths of the first 30 asteroids.
         """
-        # Update on how many asteroids are still left
-        print len(self.asteroids)
-
         # Create histogram of orbital times
         periodlist = []
         for asteroid in self.asteroids:
             period = asteroid.recover_period()
             if period:
                 periodlist.append(period)
+            else:
+                self.asteroids.remove(asteroid)
         plt.hist(periodlist, edgecolor="black", bins=25)
+        
+        # Update on how many asteroids are still left
+        print len(self.asteroids)
         plt.show()
 
         fig = plt.figure()
