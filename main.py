@@ -16,7 +16,7 @@ from scipy.integrate import odeint
 GM = 4*np.pi**2
 MSOL = 3.33e5
 
-test = kirkwoods.Simulation(250, 5, 0.002)
+test = kirkwoods.Simulation(500, 100, 0.002)
 test.run_N_body_sim(test.Sun, test.Jupiter, test.asteroids)
 test.visualize()
 

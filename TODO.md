@@ -10,7 +10,7 @@
   - ~~As asteroids are now aware how far from the sun they are, this should be an easy thing to implement~~ Currently throw away all asteroids which go further than 6.5AU
   - Might be an idea to also throw away asteroids which become too attached to Jupiter (moon-like)
 
-* Find a way to have the asteroids be aware what their period is
+* ~~Find a way to have the asteroids be aware what their period is~~ First version live; currently assumes P² = a³ and checks if the position one full period back is within 10% distance of the final position
   - Possibly track how long it takes them to cross from negative x -> positive x? Assuming they are following (mostly) circular orbits that should work
   - Can even track eccentricity by checking the difference in positive x time versus negative x time which might allow for throwing out very eccentric orbits if we want to
 
