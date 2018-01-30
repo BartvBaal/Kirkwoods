@@ -217,27 +217,27 @@ class Simulation(object):
         sun.vx = sun.vx - (GM*planet.mass*(sun.x - planet.x) / (distance**3))*self.time_step
         sun.x = sun.x + sun.vx*self.time_step
         
-        sun.pos[0].append(sun.x)
-        sun.vel[0].append(sun.vx)
+#        sun.pos[0].append(sun.x)
+#        sun.vel[0].append(sun.vx)
 
         planet.vx = planet.vx - (GM*sun.mass*(planet.x - sun.x) / (distance**3))*self.time_step
         planet.x = planet.x + planet.vx*self.time_step
 
-        planet.pos[0].append(planet.x)
-        planet.vel[0].append(planet.vx)
+#        planet.pos[0].append(planet.x)
+#        planet.vel[0].append(planet.vx)
         
         # Now for y
         sun.vy = sun.vy - (GM*planet.mass*(sun.y - planet.y) / (distance**3))*self.time_step
         sun.y = sun.y + sun.vy*self.time_step
         
-        sun.pos[1].append(sun.y)
-        sun.vel[1].append(sun.vy)
+#        sun.pos[1].append(sun.y)
+#        sun.vel[1].append(sun.vy)
 
         planet.vy = planet.vy - (GM*sun.mass*(planet.y - sun.y) / (distance**3))*self.time_step
         planet.y = planet.y + planet.vy*self.time_step
 
-        planet.pos[1].append(planet.y)
-        planet.vel[1].append(planet.vy)
+#        planet.pos[1].append(planet.y)
+#        planet.vel[1].append(planet.vy)
 
     def update_asteroid(self, body1, body2, body3, dimensions):
         """
@@ -253,24 +253,24 @@ class Simulation(object):
                                (GM*body2.mass*(body3.x - body2.x) / (body3.jupdi**3)))*self.time_step
         body3.x = body3.x + body3.vx*self.time_step
 
-        body3.pos[0].append(body3.x)
-        body3.vel[0].append(body3.vx)
+#        body3.pos[0].append(body3.x)
+#        body3.vel[0].append(body3.vx)
 
         # Updating y-values for asteroid
         body3.vy = body3.vy - ((GM*body1.mass*(body3.y - body1.y) / (body3.sundi**3)) + 
                                (GM*body2.mass*(body3.y - body2.y) / (body3.jupdi**3)))*self.time_step
         body3.y = body3.y + body3.vy*self.time_step
 
-        body3.pos[1].append(body3.y)
-        body3.vel[1].append(body3.vy)
+#        body3.pos[1].append(body3.y)
+#        body3.vel[1].append(body3.vy)
 
         # Updating z-values for asteroid
         body3.vz = body3.vz - ((GM*body1.mass*(body3.z - body1.z) / (body3.sundi**3)) + 
                                (GM*body2.mass*(body3.z - body2.z) / (body3.jupdi**3)))*self.time_step
         body3.z = body3.z + body3.vz*self.time_step
 
-        body3.pos[2].append(body3.z)
-        body3.vel[2].append(body3.vz)
+#        body3.pos[2].append(body3.z)
+#        body3.vel[2].append(body3.vz)
 
         # Recalculate distances to sun and jupiter
         body3.sundi = self.get_distance(body1, body3)
@@ -347,21 +347,21 @@ class Simulation(object):
         print len(self.asteroids)
         plt.show()
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot(*self.Sun.pos, lw=4, label="Sun")
-        for asteroid in self.asteroids[:30]:
-            ax.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
-        ax.plot(*self.Jupiter.pos, label="Jupiter", c="black", lw=2)
-        ax.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
-        ax.set_xlim3d(-5.5, 5.5)
-        ax.set_xlabel("X (AU)")
-        ax.set_ylim3d(-5.5, 5.5)
-        ax.set_ylabel("Y (AU)")
-        ax.set_zlim3d(-.1, .1)  # Unsure what the best values are here, this seems pretty ok
-        ax.set_zlabel("Z (AU)")
+#        fig = plt.figure()
+#        ax = fig.add_subplot(111, projection='3d')
+#        ax.plot(*self.Sun.pos, lw=4, label="Sun")
+#        for asteroid in self.asteroids[:30]:
+#            ax.plot(*asteroid.pos, ls="dashed")  #, label="Asteroid"
+#        ax.plot(*self.Jupiter.pos, label="Jupiter", c="black", lw=2)
+#        ax.legend(fontsize=12, frameon=True, fancybox=True, edgecolor="#00AA00", loc="lower right")
+#        ax.set_xlim3d(-5.5, 5.5)
+#        ax.set_xlabel("X (AU)")
+#        ax.set_ylim3d(-5.5, 5.5)
+#        ax.set_ylabel("Y (AU)")
+#        ax.set_zlim3d(-.1, .1)  # Unsure what the best values are here, this seems pretty ok
+#        ax.set_zlabel("Z (AU)")
 
-        plt.show()
+#        plt.show()
 
 ### OLD CODE BELOW ITS PUT INTO FUNCTIONS, ONLY HERE AS TEMPORARY BACKLOG ###
 #            for dim in range(dimensions):
