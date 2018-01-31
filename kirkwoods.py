@@ -22,7 +22,7 @@ class Constants(object):
     Defining a class that contains the constants within the problem
     """
     def __init__(self):
-        # G is PER SOLAR MASS
+        # Units in AU, solar masses and years
         self.GM = 4*np.pi**2
         self.MSOL = 1
 
@@ -32,73 +32,72 @@ class Constants(object):
         self.mass_jup = 1/1047.
         self.ecc_jup = 0.0489
 
-        # Point 0,0 to be the center of mass
+        # Point 0,0 to be the center of mass of sun/jupiter system
         self.offset_cm = self.smaxis_jup / (1+(1/self.mass_jup))
+
+        # Initial velocity of jupiter
         self.start_vel_jup = math.sqrt(
                 ((self.GM)/self.smaxis_jup)*((1+self.ecc_jup)/1-self.ecc_jup))
 
-        # Initial conditions of sun and jupiter (x0, y0, z0) and (vx0, vy0, vz0)
-        self.initial_pos_jup = np.asarray([0, self.smaxis_jup*(1-self.ecc_jup)-self.offset_cm, 0])
+        # Initial conditions of jupiter and sun (x0, y0, z0) and (vx0, vy0, vz0)
+        self.initial_pos_jup = np.asarray([0,
+                            self.smaxis_jup*(1-self.ecc_jup)-self.offset_cm, 0])
         self.initial_vel_jup = np.asarray([self.start_vel_jup, 0, 0])
 
         self.initial_pos_sun = np.asarray([0, -self.offset_cm, 0])
-        self.initial_vel_sun = np.asarray([-self.start_vel_jup*self.offset_cm/self.smaxis_jup,0, 0])
-
-
-class Astro_body(object):
-    """
-    This class contains default initialisations
-    """
-
-    def __init__(self, position, velocity):
-        """
-        Initialisations, if none provided: default parameters are used
-        """
-
-        # Current location and velocity of the objects
-        self.pos = np.asarray(position)
-        self.vel = np.asarray(velocity)
-
-        # Variable to track the distance to the sun and jupiter
-        self.dis_sun = 0
-        self.dis_jup = 0
+        self.initial_vel_sun = np.asarray(
+                    [-self.start_vel_jup*self.offset_cm/self.smaxis_jup,0, 0])
 
 class Kirkwood_solver(object):
     """
+    This class contains important initialisations, creating all of the asteroids
+    and solves the orbital motions of jupiter and the asteroids using
+    Euler-Cromer
     """
-    def __init__(self, total_time, time_step, amount_of_asteroids, constants):
+    def __init__(self, total_time, time_step, number_of_asteroids, constants):
         """
+        Initialisations
         """
 
         # The interval (step size or h)
         self.time_step = time_step
 
-        # number of iterations
+        # Number of iterations
         self.n_iterations = total_time / self.time_step
 
+        # Setting the constants of the problem
         self.const = constants
 
-        self.amount_asteroids = amount_of_asteroids
+        # Number of asteroids
+        self.number_of_asteroids = number_of_asteroids
 
+        # Position and velocities (x,y,z), (vx,vy,vz) as numpy arrays
         self.sun_pos = constants.initial_pos_sun
         self.sun_vel = constants.initial_vel_sun
         self.jup_pos = constants.initial_pos_jup
         self.jup_vel = constants.initial_vel_jup
 
+        # Obtain all of the asteroids, their positions and velocities
         ast_pos, ast_vel = self.create_asteroids()
         self.asteroids_pos = ast_pos
         self.asteroids_vel = ast_vel
 
     def create_asteroids(self):
-        ast_sema = (2, 5.)
+        """
+        Creating the asteroids with random intial conditions
+        """
 
-        asteroids_pos = []  # List off asteroids (for now)
+        # The range of semi major axis where asteroids should be in
+        smaxis_asteroid = (2, 5.)
+
+        # Storing as (x,y,z) and (vx,vy,vz) respectively
+        asteroids_pos = []
         asteroids_vel = []
 
         # Create all the asteroid Kirkwoods objects
-        for amount in range(self.amount_asteroids):
+        for amount in range(self.number_of_asteroids):
             startecc = 0  # No eccentricity for now
-            startloc = random.uniform(*ast_sema)*(1-startecc)
+            startloc = random.uniform(*smaxis_asteroid)*(1-startecc)
             startvel = np.sqrt(((1+startecc)/(1-startecc))*self.const.GM/startloc)
 
             # Randomize the starting point of the asteroid's orbit
@@ -138,14 +137,18 @@ class Kirkwood_solver(object):
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         dis_jup = np.sqrt(np.sum((self.asteroids_pos - self.jup_pos)**2,  axis=1))[:,None]
 
+        index_far_asteroids = np.where(dis_sun > 7)[0]
+        if len(index_far_asteroids) > 1:
+            dis_sun = np.delete(dis_sun, index_far_asteroids, axis=0)
+            dis_jup = np.delete(dis_jup, index_far_asteroids, axis=0)
+
+            self.asteroids_pos = np.delete(self.asteroids_pos, index_far_asteroids, axis=0)
+            self.asteroids_vel = np.delete(self.asteroids_vel, index_far_asteroids, axis=0)
+
         self.asteroids_vel = self.asteroids_vel - self.const.GM*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
                                (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))*self.time_step
         self.asteroids_pos = self.asteroids_pos + self.asteroids_vel*self.time_step
 
-        # Remove the asteroid from the list if it goes too far out
-        # Current limit is 6.5AU
-        # if body3.dis_sun > 6.5:
-        #     self.asteroids.remove(body3)
 
     def run_N_body_sim(self):
         """
@@ -161,8 +164,13 @@ class Kirkwood_solver(object):
         """
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         plotlist = np.sqrt(dis_sun**3)/self.const.orbital_period_jup
-        plt.hist(plotlist, range=[0., 1.], edgecolor="black", bins=25)
+        plt.figure(1)
+        plt.hist(plotlist, edgecolor="black", bins=25)
+
+        plt.figure(2)
+        plt.hist(dis_sun, edgecolor="black", bins=25)
         plt.show()
+
 
 
 if __name__ == "__main__":
@@ -171,7 +179,10 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(1000, 0.002, 5000, c)
+    test = Kirkwood_solver(100, 0.002, 500, c)
     test.run_N_body_sim()
+    print "sun",test.sun_pos
+    print "jup",test.jup_pos
+    #print "ast",test.asteroids_pos
+    print "len", len(test.asteroids_pos)
     test.visualize()
-
