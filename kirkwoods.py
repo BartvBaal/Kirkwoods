@@ -161,7 +161,7 @@ class Kirkwood_solver(object):
         """
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         plotlist = np.sqrt(dis_sun**3)/self.const.orbital_period_jup
-        plt.hist(plotlist, edgecolor="black", bins=25)
+        plt.hist(plotlist, range=[0., 1.], edgecolor="black", bins=25)
         plt.show()
 
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(100, 0.002, 10, c)
+    test = Kirkwood_solver(1000, 0.002, 5000, c)
     test.run_N_body_sim()
     test.visualize()
 

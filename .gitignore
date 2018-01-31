@@ -7,4 +7,3 @@ test.txt
 *.aux
 *.pdf
 .ipynb_checkpoints/
-*.ipynb
