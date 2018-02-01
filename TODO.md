@@ -8,7 +8,7 @@
     
 * Find an easy way to throw out asteroids which become too elliptical or go too far out (need2track changes in eccentricity for the first which might be not-practical...). ~~Change in setup no longer throws away far-off asteroids, need to re-establish a way to do this (WIP).~~
   - ~~As asteroids are now aware how far from the sun they are, this should be an easy thing to implement.~~ Currently throw away all asteroids which go further than ~~6.5AU~~ 7 AU. Considering throwing away close-to-sun asteroids (within 1.2 AU??) too.
-  - Might be an idea to also throw away asteroids which become too attached to Jupiter (moon-like)
+  - Might be an idea to also throw away asteroids which become too attached to Jupiter (moon-like). Long live feed has shown that this might indeed become an issue (and leads to strange calculations for the semi major axis if nothing else).
 
 * ~~Find a way to have the asteroids be aware what their period is~~ First version live; currently assumes P² = a³ ~~and checks if the position one full period back is within 10% distance of the final position. Need to figure out to track backwards ?~~
   - ~~Possibly track how long it takes them to cross from negative x -> positive x? Assuming they are following (mostly) circular orbits that should work~~
