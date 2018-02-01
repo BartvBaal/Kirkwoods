@@ -37,7 +37,7 @@ class Constants(object):
 
         # Initial velocity of jupiter
         self.start_vel_jup = math.sqrt(
-                ((self.GM)/self.smaxis_jup)*((1+self.ecc_jup)/1-self.ecc_jup))
+                ((self.GM)/self.smaxis_jup)*((1+self.ecc_jup)/(1-self.ecc_jup)))
 
         # Initial conditions of jupiter and sun (x0, y0, z0) and (vx0, vy0, vz0)
         self.initial_pos_jup = np.asarray([0,
@@ -46,7 +46,7 @@ class Constants(object):
 
         self.initial_pos_sun = np.asarray([0, -self.offset_cm, 0])
         self.initial_vel_sun = np.asarray(
-                    [-self.start_vel_jup*self.offset_cm/self.smaxis_jup,0, 0])
+                    [-self.start_vel_jup*self.mass_jup,0, 0])
 
 
 class Kirkwood_solver(object):
@@ -145,10 +145,9 @@ class Kirkwood_solver(object):
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         dis_jup = np.sqrt(np.sum((self.asteroids_pos - self.jup_pos)**2,  axis=1))[:,None]
 
-        # Check and remove for runaway asteroids ## NOTE: NOT 100% EFFECTIVE
+        # Check and remove for runaway asteroids
         index_far_asteroids = np.where(dis_sun > 7)[0]
-        if len(index_far_asteroids) > 1:
-#            print dis_sun[index_far_asteroids], type(index_far_asteroids)
+        if len(index_far_asteroids) >= 1:
             dis_sun = np.delete(dis_sun, index_far_asteroids, axis=0)
             dis_jup = np.delete(dis_jup, index_far_asteroids, axis=0)
 
@@ -173,6 +172,7 @@ class Kirkwood_solver(object):
             self.update_asteroid()
             self.update_planet()
 
+
     def visualize(self):
         """
         Creates a histogram of the period distribution for the asteroids.
@@ -181,12 +181,12 @@ class Kirkwood_solver(object):
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         plotlist = np.sqrt(dis_sun**3)/self.const.orbital_period_jup
         plt.figure(1)
-        plt.hist(plotlist, edgecolor="black", bins=25)
+        plt.hist(plotlist, edgecolor="black", bins=100)
 
         # Distance to sun histogram, jupiter's semi major axis included
         plt.figure(2)
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
-        plt.hist(dis_sun, edgecolor="black", bins=25)
+        plt.hist(dis_sun, edgecolor="black", bins=100)
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
 
@@ -198,10 +198,11 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(100, 0.002, 500, c)
+    test = Kirkwood_solver(300, 0.002, 1000, c)
     test.run_N_body_sim()
     print "sun",test.sun_pos
     print "jup",test.jup_pos
     #print "ast",test.asteroids_pos
     print "len", len(test.asteroids_pos)
+    print c.offset_cm
     test.visualize()
