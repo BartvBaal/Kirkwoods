@@ -173,20 +173,31 @@ class Kirkwood_solver(object):
             self.update_planet()
 
 
+    def find_smaxis_asteroids(self):
+        """
+        a = -GM/(2E) where E is total energy: E = v**2/2 - GM/r
+        Used for the visualization.
+        """
+        dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
+        energy = np.sum(self.asteroids_vel**2, axis=1)[:,None]/2 - self.const.GM/dis_sun
+
+        return -self.const.GM/(2*energy)
+
+
     def visualize(self):
         """
         Creates a histogram of the period distribution for the asteroids.
         """
         # Orbital period histogram
-        dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
-        plotlist = np.sqrt(dis_sun**3)/self.const.orbital_period_jup
+        smaxis_asteroids = self.find_smaxis_asteroids()
+        plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
         plt.figure(1)
         plt.hist(plotlist, edgecolor="black", bins=100)
 
         # Distance to sun histogram, jupiter's semi major axis included
         plt.figure(2)
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
-        plt.hist(dis_sun, edgecolor="black", bins=100)
+        plt.hist(smaxis_asteroids, edgecolor="black", bins=100)
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
 
@@ -198,7 +209,7 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(300, 0.002, 1000, c)
+    test = Kirkwood_solver(3000, 0.002, 850, c)
     test.run_N_body_sim()
     print "sun",test.sun_pos
     print "jup",test.jup_pos
