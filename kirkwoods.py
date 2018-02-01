@@ -161,16 +161,48 @@ class Kirkwood_solver(object):
         self.asteroids_pos = self.asteroids_pos + self.asteroids_vel*self.time_step
 
 
-    def run_N_body_sim(self):
+    def run_N_body_sim(self, display=False, start_frac=0.0, update_point=100):
         """
         Calls the update_asteroid and update_planet functions in order to run
         the simulation for the amount of asteroids specified in the init.
         See those specific functions for more comments on their workings.
+        If display is set to True, a live feed will be given for the first
+        thirty asteroids. start_frac is the point at which the visualization
+        starts (so for 0.3 it will start after 30% of the run has been done),
+        while update_point is how many steps are in between each update.
         """
+        # Save the initial semimajor axis distribution
+        self.initial_smaxis_asteroids = (self.find_smaxis_asteroids() /
+                                         self.const.smaxis_jup)
+
+        # For live visualization
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
         # Perform n_iterations-1 steps (intialization counts for the first step)
         for i in range(int(self.n_iterations) - 1):
             self.update_asteroid()
             self.update_planet()
+
+            # Only do a live feed at certain conditions
+            if display:
+                if i % update_point == 0 and i > start_frac*(int(self.n_iterations)):
+                    # Remove the last view so we only see the current asteroid positions
+                    plt.cla()
+                    ax.scatter(*self.asteroids_pos.T, c="#000066", s=20)  # Transpose them
+                    ax.scatter(*self.jup_pos.T, c="#660000", s=115)
+                    ax.scatter(*self.sun_pos.T, c="#FFA31A", s=250)
+                    ax.set_xlim3d(-6, 6)
+                    ax.set_xlabel("X (AU)")
+                    ax.set_ylim3d(-6, 6)
+                    ax.set_ylabel("Y (AU)")
+                    ax.set_zlim3d(-.1, .1)
+                    ax.set_zlabel("Z (AU)")
+                    ax.set_title("Iteration: {}, Asteroids: {}".format(i, len(self.asteroids_pos)))
+                    fig.canvas.draw()
+                    plt.pause(0.05)
+        if display:
+            plt.show()
 
 
     def find_smaxis_asteroids(self):
@@ -188,19 +220,23 @@ class Kirkwood_solver(object):
         """
         Creates a histogram of the period distribution for the asteroids.
         """
+        # The initial distribution
+        plt.figure(1)
+        plt.hist(self.initial_smaxis_asteroids, edgecolor="black", bins=75)
+        plt.title("Initial semi major axis")
+
         # Orbital period histogram
         smaxis_asteroids = self.find_smaxis_asteroids()
         plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
-        plt.figure(1)
-        plt.hist(plotlist, edgecolor="black", bins=100)
+        plt.figure(2)
+        plt.hist(plotlist, edgecolor="black", bins=75)
 
         # Distance to sun histogram, jupiter's semi major axis included
-        plt.figure(2)
+        plt.figure(3)
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
-        plt.hist(smaxis_asteroids, edgecolor="black", bins=100)
+        plt.hist(smaxis_asteroids, edgecolor="black", bins=75)
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
-
 
 
 if __name__ == "__main__":
@@ -209,8 +245,8 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(3000, 0.002, 850, c)
-    test.run_N_body_sim()
+    test = Kirkwood_solver(300, 0.002, 5000, c)
+    test.run_N_body_sim(display=False)  # Set display to True for live feed
     print "sun",test.sun_pos
     print "jup",test.jup_pos
     #print "ast",test.asteroids_pos
