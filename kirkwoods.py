@@ -48,6 +48,7 @@ class Constants(object):
         self.initial_vel_sun = np.asarray(
                     [-self.start_vel_jup*self.offset_cm/self.smaxis_jup,0, 0])
 
+
 class Kirkwood_solver(object):
     """
     This class contains important initialisations, creating all of the asteroids
@@ -71,7 +72,8 @@ class Kirkwood_solver(object):
         # Number of asteroids
         self.number_of_asteroids = number_of_asteroids
 
-        # Position and velocities (x,y,z), (vx,vy,vz) as numpy arrays
+        # Position and velocities of sun/jupiter (x,y,z), (vx,vy,vz) as numpy
+        # arrays, as defined in the constants
         self.sun_pos = constants.initial_pos_sun
         self.sun_vel = constants.initial_vel_sun
         self.jup_pos = constants.initial_pos_jup
@@ -81,6 +83,7 @@ class Kirkwood_solver(object):
         ast_pos, ast_vel = self.create_asteroids()
         self.asteroids_pos = ast_pos
         self.asteroids_vel = ast_vel
+
 
     def create_asteroids(self):
         """
@@ -94,19 +97,19 @@ class Kirkwood_solver(object):
         asteroids_pos = []
         asteroids_vel = []
 
-        # Create all the asteroid Kirkwoods objects
+        # Create all the asteroids with varying initial settings
         for amount in range(self.number_of_asteroids):
             startecc = 0  # No eccentricity for now
             startloc = random.uniform(*smaxis_asteroid)*(1-startecc)
-            startvel = np.sqrt(((1+startecc)/(1-startecc))*self.const.GM/startloc)
+            startvel = math.sqrt(((1+startecc)/(1-startecc))*self.const.GM/startloc)
 
             # Randomize the starting point of the asteroid's orbit
             orb_loc = random.uniform(0, 2*np.pi)
-            startx = np.cos(orb_loc)*startloc
-            starty = np.sin(orb_loc)*startloc
+            startx = math.cos(orb_loc)*startloc
+            starty = math.sin(orb_loc)*startloc
             startz = 0  # Start in the jupiter-sun plane
-            startvelx = np.sin(orb_loc)*startvel
-            startvely = -np.cos(orb_loc)*startvel
+            startvelx = math.sin(orb_loc)*startvel
+            startvely = -math.cos(orb_loc)*startvel
             startvelz = random.uniform(-startvel, startvel)*0.01  # Temp range
 
             asteroids_pos.append([startx, starty, startz])
@@ -114,46 +117,58 @@ class Kirkwood_solver(object):
 
         return np.asarray(asteroids_pos), np.asarray(asteroids_vel)
 
+
     def update_planet(self):
         """
         Updates the location and velocity for a planet around the sun for a
         single timestep.
         """
-        # Sun and Jupiter should never get a z-location != 0 so only 2D
+        # Determine distance between sun and jupiter
         distance = math.sqrt(np.sum((self.sun_pos - self.jup_pos)**2))
 
+        # Update solar velocity and location; vdot = GM*vector/(distance**3)
         self.sun_vel = self.sun_vel - (self.const.GM*self.const.mass_jup*(self.sun_pos - self.jup_pos) / (distance**3))*self.time_step
         self.sun_pos = self.sun_pos + self.sun_vel*self.time_step
 
+        # Update jupiter velocity and location; vdot = GM*vector/(distance**3)
         self.jup_vel = self.jup_vel - (self.const.GM*self.const.MSOL*(self.jup_pos - self.sun_pos) / (distance**3))*self.time_step
         self.jup_pos = self.jup_pos + self.jup_vel*self.time_step
 
+
     def update_asteroid(self):
         """
-        Updates the position for the ast roid *before* the sun and planet have
-        been updated. Body1 as star, body2 as planet, body3 as asteroid.
-        dimensions should be the same for all objects. Currently works for 3D.
+        Updates the velocities and locations for all asteroids. Should be called
+        before the update_planet() function, to prevent off-by-one calculations.
+        Will also throw away asteroids which go too far from the sun.
         """
+        # Matrix setup for distances to the sun/jupiter for each asteroid
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         dis_jup = np.sqrt(np.sum((self.asteroids_pos - self.jup_pos)**2,  axis=1))[:,None]
 
+        # Check and remove for runaway asteroids ## NOTE: NOT 100% EFFECTIVE
         index_far_asteroids = np.where(dis_sun > 7)[0]
         if len(index_far_asteroids) > 1:
+#            print dis_sun[index_far_asteroids], type(index_far_asteroids)
             dis_sun = np.delete(dis_sun, index_far_asteroids, axis=0)
             dis_jup = np.delete(dis_jup, index_far_asteroids, axis=0)
 
             self.asteroids_pos = np.delete(self.asteroids_pos, index_far_asteroids, axis=0)
             self.asteroids_vel = np.delete(self.asteroids_vel, index_far_asteroids, axis=0)
 
-        self.asteroids_vel = self.asteroids_vel - self.const.GM*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
-                               (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))*self.time_step
+        # Update asteroids velocities and locations; vdot = GM*vector/(distance**3)
+        self.asteroids_vel = (self.asteroids_vel - 
+           self.const.GM*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
+           (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))*self.time_step)
         self.asteroids_pos = self.asteroids_pos + self.asteroids_vel*self.time_step
 
 
     def run_N_body_sim(self):
         """
+        Calls the update_asteroid and update_planet functions in order to run
+        the simulation for the amount of asteroids specified in the init.
+        See those specific functions for more comments on their workings.
         """
-
+        # Perform n_iterations-1 steps (intialization counts for the first step)
         for i in range(int(self.n_iterations) - 1):
             self.update_asteroid()
             self.update_planet()
@@ -162,13 +177,17 @@ class Kirkwood_solver(object):
         """
         Creates a histogram of the period distribution for the asteroids.
         """
+        # Orbital period histogram
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
         plotlist = np.sqrt(dis_sun**3)/self.const.orbital_period_jup
         plt.figure(1)
         plt.hist(plotlist, edgecolor="black", bins=25)
 
+        # Distance to sun histogram, jupiter's semi major axis included
         plt.figure(2)
+        plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
         plt.hist(dis_sun, edgecolor="black", bins=25)
+        plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
 
 
