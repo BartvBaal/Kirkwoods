@@ -176,8 +176,10 @@ class Kirkwood_solver(object):
                                          self.const.smaxis_jup)
 
         # For live visualization
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        if display:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            plt.pause(4)  # Delay for a few seconds
 
         # Perform n_iterations-1 steps (intialization counts for the first step)
         for i in range(int(self.n_iterations) - 1):
@@ -189,7 +191,7 @@ class Kirkwood_solver(object):
                 if i % update_point == 0 and i > start_frac*(int(self.n_iterations)):
                     # Remove the last view so we only see the current asteroid positions
                     plt.cla()
-                    ax.scatter(*self.asteroids_pos.T, c="#000066", s=20)  # Transpose them
+                    ax.scatter(*self.asteroids_pos.T, c="#3399FF", s=1)  # Transpose them
                     ax.scatter(*self.jup_pos.T, c="#660000", s=115)
                     ax.scatter(*self.sun_pos.T, c="#FFA31A", s=250)
                     ax.set_xlim3d(-6, 6)
@@ -220,21 +222,23 @@ class Kirkwood_solver(object):
         """
         Creates a histogram of the period distribution for the asteroids.
         """
-        # The initial distribution
+        # The initial distribution - clear first to prevent glitches from visualization setups
         plt.figure(1)
-        plt.hist(self.initial_smaxis_asteroids, edgecolor="black", bins=75)
+        plt.hist(self.initial_smaxis_asteroids, edgecolor="black", bins=np.linspace(0.3, 1., 60))
         plt.title("Initial semi major axis")
 
         # Orbital period histogram
         smaxis_asteroids = self.find_smaxis_asteroids()
         plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
         plt.figure(2)
-        plt.hist(plotlist, edgecolor="black", bins=75)
+        plt.hist(plotlist, edgecolor="black", histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Final", lw=2.5, color="#660066")
+        plt.hist(self.initial_smaxis_asteroids, histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Initial", lw=2.5, color="#009900")
+        plt.legend(fontsize=13, frameon=True, fancybox=True, edgecolor="#000066")
 
         # Distance to sun histogram, jupiter's semi major axis included
         plt.figure(3)
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
-        plt.hist(smaxis_asteroids, edgecolor="black", bins=75)
+        plt.hist(smaxis_asteroids, edgecolor="black", bins=np.linspace(1.5, 5.5, 150))
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
 
@@ -245,7 +249,7 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(300, 0.002, 5000, c)
+    test = Kirkwood_solver(1000, 0.002, 800, c)
     test.run_N_body_sim(display=False)  # Set display to True for live feed
     print "sun",test.sun_pos
     print "jup",test.jup_pos

@@ -20,4 +20,5 @@
   - ~~Can solve part of the get_distance issue by just putting the Sun at the center and ignoring the whole center-off-mass @ center part (pretend the sun is the center of mass). This would also slightly cut down on the runtime of update_planet~~ Currently not an issue
 
 * Later additional options:
+  - Combining GM and timestep into 1 value and remove * 1 parts should very slightly improve runtime (~4%). Does impact readability a bit so not yet implemented because of that.
   - ~~Think about getting different timesteps for different asteroids...~~ It's probably easier to ask all asteroids how small it wants the timestep to be and use the smallest timestep for all objects, rather than have different timesteps for different objects at a certain time
