@@ -242,6 +242,15 @@ class Kirkwood_solver(object):
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
         plt.show()
 
+        # Need to os.create working directory first & functionalize this
+        np.save("Results/plotlist.npy", plotlist)
+        np.save("Results/initial.npy", self.initial_smaxis_asteroids)
+        np.save("Results/sunpos.npy", self.sun_pos)
+        np.save("Results/sunvel.npy", self.sun_vel)
+        np.save("Results/juppos.npy", self.jup_pos)
+        np.save("Results/jupvel.npy", self.jup_vel)
+        np.save("Results/asteroidspos.npy", self.asteroids_pos)
+        np.save("Results/asteroidsvel.npy", self.asteroids_vel)
 
 if __name__ == "__main__":
     c = Constants()

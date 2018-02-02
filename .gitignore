@@ -8,3 +8,4 @@ test.txt
 *.pdf
 .ipynb_checkpoints/
 *.ipynb
+*.npy
