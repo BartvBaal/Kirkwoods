@@ -264,10 +264,10 @@ class Kirkwood_solver(object):
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
         plt.hist(smaxis_asteroids, edgecolor="black", bins=np.linspace(1.5, 5.5, 150))
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
+
+        self.save_data([plotlist])  # Do this first so it happens before the plots show
         plt.show()
 
-        # Need to os.create working directory first & functionalize this
-        self.save_data([plotlist])
 
 if __name__ == "__main__":
     c = Constants()
