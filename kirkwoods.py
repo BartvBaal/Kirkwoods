@@ -6,6 +6,7 @@
 """
 
 import numpy as np
+import os
 import math
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -218,6 +219,29 @@ class Kirkwood_solver(object):
         return -self.const.GM/(2*energy)
 
 
+    def save_data(self, inlist):
+        """
+        Function to save the generated data. Will save some default lists and
+        the items inside inlist as separate .npy files. Recover the data with
+        np.load() function.
+        """
+        total_time = int(self.time_step * self.n_iterations)
+        subdir = str(self.number_of_asteroids) + "_Asteroids_" + str(total_time) + "_Time_" + str(self.time_step) + "_Stepsize"
+        if not os.path.exists("%s/%s" % ("Results", subdir)):
+            os.makedirs("%s/%s" % ("Results", subdir))
+
+        # Save all the object values, and then any elements in the inlist
+        np.save("%s/%s/initial.npy" % ("Results", subdir), self.initial_smaxis_asteroids)
+        np.save("%s/%s/sunpos.npy" % ("Results", subdir), self.sun_pos)
+        np.save("%s/%s/sunvel.npy" % ("Results", subdir), self.sun_vel)
+        np.save("%s/%s/juppos.npy" % ("Results", subdir), self.jup_pos)
+        np.save("%s/%s/jupvel.npy" % ("Results", subdir), self.jup_vel)
+        np.save("%s/%s/asteroidspos.npy" % ("Results", subdir), self.asteroids_pos)
+        np.save("%s/%s/asteroidsvel.npy" % ("Results", subdir), self.asteroids_vel)
+        for element in inlist:
+            np.save("%s/%s/%s" % ("Results", subdir, str(element)+".npy"), element)
+
+
     def visualize(self):
         """
         Creates a histogram of the period distribution for the asteroids.
@@ -243,14 +267,7 @@ class Kirkwood_solver(object):
         plt.show()
 
         # Need to os.create working directory first & functionalize this
-        np.save("Results/plotlist.npy", plotlist)
-        np.save("Results/initial.npy", self.initial_smaxis_asteroids)
-        np.save("Results/sunpos.npy", self.sun_pos)
-        np.save("Results/sunvel.npy", self.sun_vel)
-        np.save("Results/juppos.npy", self.jup_pos)
-        np.save("Results/jupvel.npy", self.jup_vel)
-        np.save("Results/asteroidspos.npy", self.asteroids_pos)
-        np.save("Results/asteroidsvel.npy", self.asteroids_vel)
+        self.save_data([plotlist])
 
 if __name__ == "__main__":
     c = Constants()
@@ -258,7 +275,7 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(1000, 0.002, 800, c)
+    test = Kirkwood_solver(100, 0.002, 500, c)
     test.run_N_body_sim(display=False)  # Set display to True for live feed
     print "sun",test.sun_pos
     print "jup",test.jup_pos
