@@ -255,6 +255,10 @@ class Kirkwood_solver(object):
         # Orbital period histogram
         smaxis_asteroids = self.find_smaxis_asteroids()
         plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
+
+        if saving:
+            self.save_data([plotlist], ["plotlist"])  # Do this before plots show/glitch
+
         plt.figure(2)
         plt.hist(plotlist, edgecolor="black", histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Final", lw=2.5, color="#660066")
         plt.hist(self.initial_smaxis_asteroids, histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Initial", lw=2.5, color="#009900")
@@ -265,9 +269,6 @@ class Kirkwood_solver(object):
         plt.axvline(self.const.smaxis_jup, label="Jupiter SMA", linewidth=2, color='#CC3030')
         plt.hist(smaxis_asteroids, edgecolor="black", bins=np.linspace(1.5, 5.5, 150))
         plt.legend(fontsize=14, frameon=True, fancybox=True, edgecolor="#000066")
-
-        if saving:
-            self.save_data([plotlist], ["plotlist"])  # Do this before plots show
         plt.show()
 
 
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
 
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(12500, 1/256., 35000, c)
+    test = Kirkwood_solver(22500, 1/256., 50000, c)
     test.run_N_body_sim(display=False)  # Set display to True for live feed
     print "sun",test.sun_pos
     print "jup",test.jup_pos
