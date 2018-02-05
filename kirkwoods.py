@@ -260,7 +260,8 @@ class Kirkwood_solver(object):
             self.save_data([plotlist], ["plotlist"])  # Do this before plots show/glitch
 
         plt.figure(2)
-        plt.hist(plotlist, edgecolor="black", histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Final", lw=2.5, color="#660066")
+        bins = np.linspace(0.3, 1.1, 70)
+        plt.hist(plotlist, edgecolor="black", histtype="step", bins=bins, label="Final", lw=2.5, color="#660066", range=(bins.min(),bins.max()))
         plt.hist(self.initial_smaxis_asteroids, histtype="step", bins=np.linspace(0.3, 1.1, 70), label="Initial", lw=2.5, color="#009900")
         plt.legend(fontsize=13, frameon=True, fancybox=True, edgecolor="#000066")
 
