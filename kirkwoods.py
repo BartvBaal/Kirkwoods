@@ -219,8 +219,7 @@ class Kirkwood_solver(object):
         Used for the visualization.
         """
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
-        energy = np.sqrt(np.sum((self.asteroids_vel - self.sun_vel)**2, axis=1))[:,None]/2
-                - self.const.GM/dis_sun
+        energy = np.sum(self.asteroids_vel**2, axis=1)[:,None]/2 - self.const.GM/dis_sun
 
         return -self.const.GM/(2*energy)
 
