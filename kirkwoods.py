@@ -9,9 +9,7 @@ import numpy as np
 import os
 import math
 import matplotlib.pyplot as plt
-from matplotlib import animation
 import random
-from scipy.integrate import odeint
 from mpl_toolkits.mplot3d import Axes3D
 
 # Change border size of plots
@@ -24,7 +22,7 @@ class Constants(object):
     """
     def __init__(self):
         # Units in AU, solar masses and years
-        self.GM = 4*np.pi**2
+        self.GM = 4*math.pi*math.pi
         self.MSOL = 1
 
         # Jupiter info
@@ -41,12 +39,12 @@ class Constants(object):
                 ((self.GM)/self.smaxis_jup)*((1+self.ecc_jup)/(1-self.ecc_jup)))
 
         # Initial conditions of jupiter and sun (x0, y0, z0) and (vx0, vy0, vz0)
-        self.initial_pos_jup = np.asarray([0,
+        self.initial_pos_jup = np.array([0,
                             self.smaxis_jup*(1-self.ecc_jup)-self.offset_cm, 0])
-        self.initial_vel_jup = np.asarray([self.start_vel_jup, 0, 0])
+        self.initial_vel_jup = np.array([self.start_vel_jup, 0, 0])
 
-        self.initial_pos_sun = np.asarray([0, -self.offset_cm, 0])
-        self.initial_vel_sun = np.asarray(
+        self.initial_pos_sun = np.array([0, -self.offset_cm, 0])
+        self.initial_vel_sun = np.array(
                     [-self.start_vel_jup*self.mass_jup,0, 0])
 
 
@@ -72,6 +70,11 @@ class Kirkwood_solver(object):
 
         # Number of asteroids
         self.number_of_asteroids = number_of_asteroids
+
+        # Combining constants to slightly improve numerical speed
+        self.gm_time_step = self.const.GM*self.time_step
+        self.gm_mass_sol_time_step = self.const.GM*self.MSOL*self.time_step
+        self.gm_massjup_time_step = self.const.GM*self.const.mass_jup*self.time_step
 
         # Position and velocities of sun/jupiter (x,y,z), (vx,vy,vz) as numpy
         # arrays, as defined in the constants
@@ -116,7 +119,7 @@ class Kirkwood_solver(object):
             asteroids_pos.append([startx, starty, startz])
             asteroids_vel.append([startvelx, startvely, startvelz])
 
-        return np.asarray(asteroids_pos), np.asarray(asteroids_vel)
+        return np.array(asteroids_pos), np.array(asteroids_vel)
 
 
     def update_planet(self):
@@ -128,11 +131,13 @@ class Kirkwood_solver(object):
         distance = math.sqrt(np.sum((self.sun_pos - self.jup_pos)**2))
 
         # Update solar velocity and location; vdot = GM*vector/(distance**3)
-        self.sun_vel = self.sun_vel - (self.const.GM*self.const.mass_jup*(self.sun_pos - self.jup_pos) / (distance**3))*self.time_step
+        self.sun_vel = self.sun_vel -
+            self.gm_massjup_time_step*(self.sun_pos - self.jup_pos) / distance**3
         self.sun_pos = self.sun_pos + self.sun_vel*self.time_step
 
         # Update jupiter velocity and location; vdot = GM*vector/(distance**3)
-        self.jup_vel = self.jup_vel - (self.const.GM*self.const.MSOL*(self.jup_pos - self.sun_pos) / (distance**3))*self.time_step
+        self.jup_vel = self.jup_vel -
+            self.gm_mass_sol_time_step*(self.jup_pos - self.sun_pos) / distance**3
         self.jup_pos = self.jup_pos + self.jup_vel*self.time_step
 
 
@@ -156,9 +161,9 @@ class Kirkwood_solver(object):
             self.asteroids_vel = np.delete(self.asteroids_vel, index_far_asteroids, axis=0)
 
         # Update asteroids velocities and locations; vdot = GM*vector/(distance**3)
-        self.asteroids_vel = (self.asteroids_vel - 
-           self.const.GM*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
-           (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))*self.time_step)
+        self.asteroids_vel = self.asteroids_vel -
+           self.gm_time_step*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
+           (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))
         self.asteroids_pos = self.asteroids_pos + self.asteroids_vel*self.time_step
 
 
@@ -214,7 +219,8 @@ class Kirkwood_solver(object):
         Used for the visualization.
         """
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
-        energy = np.sum(self.asteroids_vel**2, axis=1)[:,None]/2 - self.const.GM/dis_sun
+        energy = np.sqrt(np.sum((self.asteroids_vel - self.sun_vel)**2, axis=1))[:,None]/2
+                - self.const.GM/dis_sun
 
         return -self.const.GM/(2*energy)
 
@@ -275,9 +281,7 @@ class Kirkwood_solver(object):
 
 if __name__ == "__main__":
     c = Constants()
-    #sun = Astro_body(c.initial_pos_sun, c.initial_vel_sun, c.MSOL, 0)
-    #jupiter = Astro_body(c.initial_pos_jup, c.initial_vel_jup, c.mass_jup, c.ecc_jup)
-
+    
     #total_time, time_step, amount_of_asteroids)
     test = Kirkwood_solver(22500, 1/256., 50000, c)
     test.run_N_body_sim(display=False)  # Set display to True for live feed
