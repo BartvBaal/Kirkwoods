@@ -29,7 +29,7 @@ class Constants(object):
         self.smaxis_jup = 5.2044
         self.orbital_period_jup = self.smaxis_jup**(3/2.)
         self.mass_jup = 1/1047.
-        self.ecc_jup = 0.0489
+        self.ecc_jup = 0.
 
         # Point 0,0 to be the center of mass of sun/jupiter system
         self.offset_cm = self.smaxis_jup / (1+(1/self.mass_jup))
@@ -40,10 +40,10 @@ class Constants(object):
 
         # Initial conditions of jupiter and sun (x0, y0, z0) and (vx0, vy0, vz0)
         self.initial_pos_jup = np.array([0,
-                            self.smaxis_jup*(1-self.ecc_jup)-self.offset_cm, 0])
+                            self.smaxis_jup*(1-self.ecc_jup), 0])
         self.initial_vel_jup = np.array([self.start_vel_jup, 0, 0])
 
-        self.initial_pos_sun = np.array([0, -self.offset_cm, 0])
+        self.initial_pos_sun = np.array([0, -self.smaxis_jup*(1-self.ecc_jup)*self.mass_jup, 0])
         self.initial_vel_sun = np.array(
                     [-self.start_vel_jup*self.mass_jup,0, 0])
 
@@ -73,7 +73,7 @@ class Kirkwood_solver(object):
 
         # Combining constants to slightly improve numerical speed
         self.gm_time_step = self.const.GM*self.time_step
-        self.gm_mass_sol_time_step = self.const.GM*self.MSOL*self.time_step
+        self.gm_mass_sol_time_step = self.const.GM*self.const.MSOL*self.time_step
         self.gm_massjup_time_step = self.const.GM*self.const.mass_jup*self.time_step
 
         # Position and velocities of sun/jupiter (x,y,z), (vx,vy,vz) as numpy
@@ -131,13 +131,13 @@ class Kirkwood_solver(object):
         distance = math.sqrt(np.sum((self.sun_pos - self.jup_pos)**2))
 
         # Update solar velocity and location; vdot = GM*vector/(distance**3)
-        self.sun_vel = self.sun_vel -
-            self.gm_massjup_time_step*(self.sun_pos - self.jup_pos) / distance**3
+        self.sun_vel = (self.sun_vel -
+            self.gm_massjup_time_step*(self.sun_pos - self.jup_pos) / distance**3)
         self.sun_pos = self.sun_pos + self.sun_vel*self.time_step
 
         # Update jupiter velocity and location; vdot = GM*vector/(distance**3)
-        self.jup_vel = self.jup_vel -
-            self.gm_mass_sol_time_step*(self.jup_pos - self.sun_pos) / distance**3
+        self.jup_vel = (self.jup_vel -
+            self.gm_mass_sol_time_step*(self.jup_pos - self.sun_pos) / distance**3)
         self.jup_pos = self.jup_pos + self.jup_vel*self.time_step
 
 
@@ -161,9 +161,9 @@ class Kirkwood_solver(object):
             self.asteroids_vel = np.delete(self.asteroids_vel, index_far_asteroids, axis=0)
 
         # Update asteroids velocities and locations; vdot = GM*vector/(distance**3)
-        self.asteroids_vel = self.asteroids_vel -
+        self.asteroids_vel = (self.asteroids_vel -
            self.gm_time_step*((self.const.MSOL*(self.asteroids_pos - self.sun_pos) / (dis_sun**3)) +
-           (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3)))
+           (self.const.mass_jup*(self.asteroids_pos - self.jup_pos) / (dis_jup**3))))
         self.asteroids_pos = self.asteroids_pos + self.asteroids_vel*self.time_step
 
 
@@ -189,6 +189,8 @@ class Kirkwood_solver(object):
 
         # Perform n_iterations-1 steps (intialization counts for the first step)
         for i in range(int(self.n_iterations) - 1):
+            if i%(500/self.time_step) == 0:
+                print i/1024
             self.update_asteroid()
             self.update_planet()
 
@@ -262,7 +264,7 @@ class Kirkwood_solver(object):
         plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
 
         if saving:
-            self.save_data([plotlist], ["plotlist"])  # Do this before plots show/glitch
+            self.save_data([], [])  # Do this before plots show/glitch
 
         plt.figure(2)
         bins = np.linspace(0.3, 1.1, 70)
@@ -282,7 +284,7 @@ if __name__ == "__main__":
     c = Constants()
     
     #total_time, time_step, amount_of_asteroids)
-    test = Kirkwood_solver(50000, 1/256., 25000, c)
+    test = Kirkwood_solver(10000, 1/1024., 25000, c)
     test.run_N_body_sim(display=False)  # Set display to True for live feed
     print "sun",test.sun_pos
     print "jup",test.jup_pos
