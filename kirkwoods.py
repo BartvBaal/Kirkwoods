@@ -92,10 +92,13 @@ class Kirkwood_solver(object):
 
     def create_asteroids(self):
         """
-        Creating the asteroids with random intial conditions
+        Creating the asteroids with random intial conditions. Will create them
+        on a circular orbit around the sun with a semi-major axis anywhere
+        between 2 and 5 AU and no initial eccentricity, but a small velocity in
+        the z-direction, as they will start in the jupiter-sun (z=0) plane.
         """
 
-        # The range of semi major axis where asteroids should be in
+        # The range of semi major axis where asteroids should be created
         smaxis_asteroid = (2, 5.)
 
         # Storing as (x,y,z) and (vx,vy,vz) respectively
@@ -125,7 +128,7 @@ class Kirkwood_solver(object):
 
     def update_planet(self):
         """
-        Updates the location and velocity for a planet around the sun for a
+        Updates the location and velocity for Jupiter around the sun for a
         single timestep.
         """
         # Determine distance between sun and jupiter
@@ -146,7 +149,7 @@ class Kirkwood_solver(object):
         """
         Updates the velocities and locations for all asteroids. Should be called
         before the update_planet() function, to prevent off-by-one calculations.
-        Will also throw away asteroids which go too far from the sun.
+        Will also throw away asteroids which go too far (>7 AU) from the sun.
         """
         # Matrix setup for distances to the sun/jupiter for each asteroid
         dis_sun = np.sqrt(np.sum((self.asteroids_pos - self.sun_pos)**2,  axis=1))[:,None]
