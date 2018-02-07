@@ -29,9 +29,10 @@ class Constants(object):
         self.smaxis_jup = 5.2044
         self.orbital_period_jup = self.smaxis_jup**(3/2.)
         self.mass_jup = 1/1047.
-        self.ecc_jup = 0.
+        self.ecc_jup = 0.0489
 
         # Point 0,0 to be the center of mass of sun/jupiter system
+        # Not-too-small timesteps will create spiral-in effect on long runs
         self.offset_cm = self.smaxis_jup / (1+(1/self.mass_jup))
 
         # Initial velocity of jupiter
@@ -40,10 +41,10 @@ class Constants(object):
 
         # Initial conditions of jupiter and sun (x0, y0, z0) and (vx0, vy0, vz0)
         self.initial_pos_jup = np.array([0,
-                            self.smaxis_jup*(1-self.ecc_jup), 0])
+                            self.smaxis_jup*(1-self.ecc_jup)-offset_cm, 0])
         self.initial_vel_jup = np.array([self.start_vel_jup, 0, 0])
 
-        self.initial_pos_sun = np.array([0, -self.smaxis_jup*(1-self.ecc_jup)*self.mass_jup, 0])
+        self.initial_pos_sun = np.array([0, -self.offset_cm, 0])
         self.initial_vel_sun = np.array(
                     [-self.start_vel_jup*self.mass_jup,0, 0])
 
@@ -190,7 +191,7 @@ class Kirkwood_solver(object):
         # Perform n_iterations-1 steps (intialization counts for the first step)
         for i in range(int(self.n_iterations) - 1):
             if i%(500/self.time_step) == 0:
-                print i/1024
+                print i*self.time_step
             self.update_asteroid()
             self.update_planet()
 
@@ -264,7 +265,7 @@ class Kirkwood_solver(object):
         plotlist = np.sqrt(smaxis_asteroids**3)/self.const.orbital_period_jup
 
         if saving:
-            self.save_data([], [])  # Do this before plots show/glitch
+            self.save_data([plotlist], ["plotlist"])  # Do this before plots show/glitch
 
         plt.figure(2)
         bins = np.linspace(0.3, 1.1, 70)
